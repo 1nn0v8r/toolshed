@@ -1,0 +1,57 @@
+# dev-context-mcp as a hardened HTTP service.
+#
+# Quick start:
+#   export MCP_AUTH_TOKEN=$(openssl rand -hex 32)
+#   export WORKSPACE=/abs/path/to/your/repo      # the repo(s) to operate on
+#   docker compose up --build
+# Then point an MCP client at http://127.0.0.1:3000/mcp with that bearer token.
+#
+# Switch to target: browser (below) to enable browse_page/screenshot.
+
+services:
+  dev-context-mcp:
+    build:
+      context: .
+      # Full-capability stack: the "browser" target bundles Playwright + Chromium
+      # so browse_page/screenshot work out of the box. Set MCP_TARGET=runtime
+      # (e.g. `just up-lean`) for a much smaller image without browser tools.
+      target: ${MCP_TARGET:-browser}
+    image: dev-context-mcp:${MCP_TARGET:-browser}
+    environment:
+      # REQUIRED — the server exits if this is unset.
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:?set MCP_AUTH_TOKEN (e.g. openssl rand -hex 32)}
+      # Dangerous tiers are OFF by default in HTTP mode. Opt in only if you trust
+      # every client that holds the token:
+      # MCP_ALLOW_EXEC: "1"
+      # MCP_ALLOW_WRITE: "1"
+      # MCP_ALLOW_ADMIN: "1"
+      # web_search backend: the in-stack SearXNG service below (private, keyless,
+      # no rate limits). Remove this to fall back to keyless DuckDuckGo, or set
+      # TAVILY_API_KEY instead.
+      SEARXNG_URL: http://searxng:8080
+      # TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+    depends_on:
+      - searxng
+    ports:
+      # Loopback-only by default (override host port with MCP_PORT). To expose
+      # beyond localhost, front this with a TLS-terminating reverse proxy —
+      # never publish the raw port to the internet.
+      - "127.0.0.1:${MCP_PORT:-3000}:3000"
+    volumes:
+      # The repo(s) the tools read/search/edit. Mount read-only (":ro") if you
+      # only enable read/web tiers.
+      - ${WORKSPACE:-./workspace}:/workspace
+    restart: unless-stopped
+
+  # Private, keyless web_search backend. JSON API is enabled in searxng/settings.yml.
+  # Not published to the host — only the MCP service reaches it over the compose network.
+  searxng:
+    image: searxng/searxng:latest
+    environment:
+      SEARXNG_BASE_URL: http://localhost:8080/
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?set SEARXNG_SECRET (run: just env)}
+    volumes:
+      - ./searxng:/etc/searxng
+    expose:
+      - "8080"
+    restart: unless-stopped

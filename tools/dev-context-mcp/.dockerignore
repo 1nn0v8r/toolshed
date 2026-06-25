@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.gitignore
+*.log
+*.tsbuildinfo
+.env
+.env.*
+workspace
+README.md
+ecosystem.config.cjs
+justfile
+.env.example
+searxng

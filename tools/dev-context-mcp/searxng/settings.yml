@@ -1,0 +1,22 @@
+# Minimal SearXNG config for use as dev-context-mcp's web_search backend.
+# Inherits SearXNG defaults; only overrides what the MCP needs:
+#   • JSON output enabled (the API web_search calls)
+#   • limiter/bot-detection off (so automated tool queries aren't blocked)
+# This instance is meant to run on the internal compose network only.
+use_default_settings: true
+
+server:
+  # Never commit a real key. docker-compose passes SEARXNG_SECRET (generated
+  # into .env by `just env`), which overrides this placeholder.
+  secret_key: "set-via-SEARXNG_SECRET-env"
+  limiter: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json
+  # Languages/safe-search left at defaults.
+
+ui:
+  static_use_hash: true

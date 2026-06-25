@@ -1,0 +1,98 @@
+# dev-context-mcp — common commands.  Run `just` (or `just --list`) to see them.
+#
+# First `just up` creates a .env with a random auth token. docker compose and
+# these recipes both read it, so you never have to export anything by hand.
+
+set dotenv-load := true
+
+# Show the available commands.
+default:
+    @just --list
+
+# ── Docker stack (MCP + SearXNG) ──────────────────────────────────────────────
+
+# Build + start the full stack (MCP with browser tools + SearXNG) in the background.
+up: env
+    docker compose up -d --build
+    @echo ""
+    @echo "Up. MCP -> http://127.0.0.1:${MCP_PORT:-3000}/mcp   (token: just token)"
+
+# Start a lean stack (no browser/Playwright — much smaller image).
+up-lean: env
+    MCP_TARGET=runtime docker compose up -d --build
+    @echo "Up (lean). MCP -> http://127.0.0.1:${MCP_PORT:-3000}/mcp"
+
+# Stop and remove the stack.
+down:
+    docker compose down
+
+# Restart the stack.
+restart: down up
+
+# Rebuild images from scratch (no cache).
+rebuild: env
+    docker compose build --no-cache
+
+# Follow logs (all services, or e.g. `just logs searxng`).
+logs *svc:
+    docker compose logs -f {{svc}}
+
+# Show service status.
+ps:
+    docker compose ps
+
+# Open a shell inside the MCP container.
+shell:
+    docker compose exec dev-context-mcp sh
+
+# Print the connection URL.
+url:
+    @echo "http://127.0.0.1:${MCP_PORT:-3000}/mcp"
+
+# Print the bearer token (from .env).
+token:
+    @grep -E '^MCP_AUTH_TOKEN=' .env | cut -d= -f2-
+
+# Hit the health endpoint.
+health:
+    @curl -fsS "http://127.0.0.1:${MCP_PORT:-3000}/healthz" && echo "" || echo "not responding"
+
+# ── Local dev (no Docker) ─────────────────────────────────────────────────────
+
+# Install dependencies.
+install:
+    npm install
+
+# Type-check (tsx does not type-check, so run this before shipping).
+typecheck:
+    npm run typecheck
+
+# Compile TypeScript to dist/.
+build:
+    npm run build
+
+# Run the smoke test (stdio + search + fetch_url + HTTP auth/gating).
+test:
+    npm test
+
+# Run the server locally over stdio (full power) under tsx.
+dev:
+    npm run dev
+
+# ── Setup ─────────────────────────────────────────────────────────────────────
+
+# Create .env with a random token if it doesn't exist yet.
+env:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f .env ]; then exit 0; fi
+    echo "Creating .env (random MCP_AUTH_TOKEN)..."
+    {
+      echo "MCP_AUTH_TOKEN=$(openssl rand -hex 32)"
+      echo "SEARXNG_SECRET=$(openssl rand -hex 32)"
+      echo "WORKSPACE=."
+      echo "MCP_PORT=3000"
+      echo "# MCP_ALLOW_EXEC=1"
+      echo "# MCP_ALLOW_WRITE=1"
+    } > .env
+    echo "Wrote .env — set WORKSPACE to your target repo, then: just up"
