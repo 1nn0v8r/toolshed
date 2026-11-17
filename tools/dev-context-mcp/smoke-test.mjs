@@ -1,9 +1,9 @@
 // Smoke test for dev-context-mcp.
 //
 // Drives the server as a real MCP child across all transports/capabilities:
-//   1. stdio (full power) — root auto-detection + the core read/shell/search tools
-//   2. stdio — search + fetch_url (against a local HTTP fixture)
-//   3. http (hardened) — auth, capability filtering, opt-in via MCP_ALLOW_EXEC
+//   1. stdio (full power), root auto-detection + the core read/shell/search tools
+//   2. stdio, search + fetch_url (against a local HTTP fixture)
+//   3. http (hardened), auth, capability filtering, opt-in via MCP_ALLOW_EXEC
 //
 // Run with:  npm test   (uses tsx; no build required)
 
@@ -37,7 +37,7 @@ const cleanEnv = Object.fromEntries(
 let failures = 0;
 function check(label, cond, extra = "") {
   if (!cond) failures++;
-  console.log(`[${cond ? "PASS" : "FAIL"}] ${label}${extra ? `  — ${extra}` : ""}`);
+  console.log(`[${cond ? "PASS" : "FAIL"}] ${label}${extra ? ` , ${extra}` : ""}`);
 }
 
 function text(res) {

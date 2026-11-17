@@ -21,7 +21,7 @@ export interface Session {
   root: string;
   /** Capability tiers enabled for this session. */
   caps: Set<Capability>;
-  /** stdio/local — dangerous tiers enabled without flags, set_repo_root unconfined. */
+  /** stdio/local, dangerous tiers enabled without flags, set_repo_root unconfined. */
   fullPower: boolean;
   /** When set (hardened mode), set_repo_root targets are confined under this dir. */
   rootBase: string | null;
@@ -98,7 +98,7 @@ export function resolveCapabilities(transport: Transport): {
     return { caps, fullPower: true };
   }
 
-  // http — hardened. Opt in per-tier, or all at once with MCP_DANGEROUS.
+  // http, hardened. Opt in per-tier, or all at once with MCP_DANGEROUS.
   const all = envFlag("MCP_DANGEROUS");
   if (all || envFlag("MCP_ALLOW_WRITE")) caps.add("write");
   if (all || envFlag("MCP_ALLOW_EXEC")) caps.add("exec");

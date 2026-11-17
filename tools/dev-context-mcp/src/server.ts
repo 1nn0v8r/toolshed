@@ -68,7 +68,7 @@ function detectRepoRoot(start: string): string {
 
 // Initial active root. Resolution order:
 //   1. REPO_ROOT env  (explicit pin)
-//   2. nearest git root above the launch cwd  (auto-detect — "works for any repo")
+//   2. nearest git root above the launch cwd  (auto-detect, "works for any repo")
 //   3. the launch cwd itself  (fallback for non-git dirs)
 export function resolveInitialRoot(): string {
   return process.env.REPO_ROOT
@@ -77,7 +77,7 @@ export function resolveInitialRoot(): string {
 }
 
 // Build a fresh, independent session for a transport. Each HTTP connection gets
-// its own — so one client's set_repo_root can never affect another's.
+// its own, so one client's set_repo_root can never affect another's.
 export function makeSession(transport: Transport): Session {
   const { caps, fullPower } = resolveCapabilities(transport);
   const root = resolveInitialRoot();
@@ -238,7 +238,7 @@ export function createServer(session: Session): Server {
     const toolName = request.params.name;
     const args = getArgs(request);
 
-    // Capability guard — block disabled tiers before doing any work.
+    // Capability guard, block disabled tiers before doing any work.
     const denied = capabilityError(session, toolName);
     if (denied) {
       return { content: [{ type: "text", text: denied }], isError: true };
@@ -369,7 +369,7 @@ export function createServer(session: Session): Server {
         throw new Error(`Invalid regex: ${(e as Error).message}`);
       }
 
-      // ripgrep fast path — native scan, no per-file JS read.
+      // ripgrep fast path, native scan, no per-file JS read.
       const rg = await rgGrep(root, { pattern, ignoreCase, includeGlobs: patterns, maxResults });
       if (rg !== null) {
         const text = rg.length
@@ -665,7 +665,7 @@ export function createServer(session: Session): Server {
         const lines = raw.split(/\r?\n/);
         const limited = lines.slice(0, maxLinesEach).join("\n");
         const truncated = lines.length > maxLinesEach
-          ? `\n... (${lines.length - maxLinesEach} more lines — use read_file_range to read further)`
+          ? `\n... (${lines.length - maxLinesEach} more lines, use read_file_range to read further)`
           : "";
         parts.push(`Audit: ${relativePath}\n\n${limited}${truncated}`);
       }
@@ -1223,7 +1223,7 @@ export function createServer(session: Session): Server {
           content: [
             {
               type: "text",
-              text: `Edit failed: oldStr matched ${occurrences} times in ${inputPath} — it must be unique.\n\nTip: include more surrounding lines in oldStr to make it unique.`,
+              text: `Edit failed: oldStr matched ${occurrences} times in ${inputPath}, it must be unique.\n\nTip: include more surrounding lines in oldStr to make it unique.`,
             },
           ],
         };

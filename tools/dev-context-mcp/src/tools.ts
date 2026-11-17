@@ -50,7 +50,7 @@ const coreTools: Tool[] = [
     description:
       "Run an arbitrary shell command from the active repo root (escape hatch for anything the specialized tools don't cover). " +
       "Shell: /bin/sh on macOS/Linux; Git Bash on Windows when installed, else cmd.exe (override with MCP_SHELL). " +
-      "Captures stdout+stderr, 60s default timeout. Prefer a specialized tool when one fits (get_git_status, run_script, get_typecheck_errors, search_code, grep ...) — they return cleaner, structured output.",
+      "Captures stdout+stderr, 60s default timeout. Prefer a specialized tool when one fits (get_git_status, run_script, get_typecheck_errors, search_code, grep ...), they return cleaner, structured output.",
     inputSchema: {
       type: "object",
       properties: {
@@ -126,7 +126,7 @@ const coreTools: Tool[] = [
   {
     name: "get_package_summary",
     description:
-      "Read package.json and return scripts and dependency names. Call this early in any task involving build, deps, or scripts — do not run 'cat package.json' or 'ls' in bash. " +
+      "Read package.json and return scripts and dependency names. Call this early in any task involving build, deps, or scripts, do not run 'cat package.json' or 'ls' in bash. " +
       "Pass `module` to target a subdirectory's package.json in a monorepo (e.g. 'packages/api').",
     inputSchema: { type: "object", properties: { ...repoRootArg, ...moduleArg } },
   },
@@ -350,14 +350,14 @@ const coreTools: Tool[] = [
     name: "get_typecheck_errors",
     description:
       "Run TypeScript typecheck and return compiler output. Call this instead of running tsc manually in bash. " +
-      "Pass `module` to typecheck a subdirectory/package in a monorepo (e.g. 'packages/api') — required when the repo root has no package.json of its own.",
+      "Pass `module` to typecheck a subdirectory/package in a monorepo (e.g. 'packages/api'), required when the repo root has no package.json of its own.",
     inputSchema: { type: "object", properties: { ...repoRootArg, ...moduleArg } },
   },
   {
     name: "get_test_failures",
     description:
       "Run the test suite and return output. Call this instead of running 'npm test' in bash. " +
-      "Pass `module` to run tests for a subdirectory/package in a monorepo (e.g. 'packages/api') — required when the repo root has no package.json of its own.",
+      "Pass `module` to run tests for a subdirectory/package in a monorepo (e.g. 'packages/api'), required when the repo root has no package.json of its own.",
     inputSchema: { type: "object", properties: { ...repoRootArg, ...moduleArg } },
   },
   {
@@ -404,7 +404,7 @@ const coreTools: Tool[] = [
     name: "edit_file",
     description:
       "Edit an existing file by replacing an exact string with new text (str_replace). " +
-      "oldStr must match the file content exactly — include enough surrounding lines to make it unique. " +
+      "oldStr must match the file content exactly, include enough surrounding lines to make it unique. " +
       "Use this for targeted fixes. Use write_file when replacing the whole file.",
     inputSchema: {
       type: "object",
@@ -421,7 +421,7 @@ const coreTools: Tool[] = [
     name: "delete_file",
     description:
       "Delete a file from the repo. Use for removing leaked secrets, stale artifacts, or dead code files. " +
-      "This is permanent — ensure the file is not needed before deleting.",
+      "This is permanent, ensure the file is not needed before deleting.",
     inputSchema: {
       type: "object",
       properties: {

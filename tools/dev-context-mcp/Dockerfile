@@ -32,7 +32,7 @@ ENV MCP_TRANSPORT=http \
     MCP_ROOT_BASE=/workspace
 EXPOSE 3000
 
-# MCP_AUTH_TOKEN must be supplied at runtime — the server refuses to boot without it.
+# MCP_AUTH_TOKEN must be supplied at runtime, the server refuses to boot without it.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD node -e "fetch('http://127.0.0.1:'+(process.env.MCP_HTTP_PORT||3000)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 

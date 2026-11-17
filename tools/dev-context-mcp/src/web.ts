@@ -1,9 +1,9 @@
 // Web / browse tools.
 //
-//   • fetch_url    — GET a URL, return readable text (HTML stripped) or raw body.
-//   • web_search   — Brave (BRAVE_API_KEY) → keyless DuckDuckGo → Tavily (TAVILY_API_KEY).
-//   • browse_page  — render a JS page with Playwright (lazy/optional) and read text.
-//   • screenshot   — Playwright screenshot to a file or inline image.
+//   • fetch_url   , GET a URL, return readable text (HTML stripped) or raw body.
+//   • web_search  , Brave (BRAVE_API_KEY) → keyless DuckDuckGo → Tavily (TAVILY_API_KEY).
+//   • browse_page , render a JS page with Playwright (lazy/optional) and read text.
+//   • screenshot  , Playwright screenshot to a file or inline image.
 //
 // All network egress is SSRF-guarded in hardened (HTTP) mode: only http(s),
 // and private/loopback targets are blocked (checked across redirects + DNS).
@@ -55,7 +55,7 @@ async function assertAllowed(rawUrl: string, session: Session): Promise<URL> {
   if (u.protocol !== "http:" && u.protocol !== "https:") {
     throw new Error("Only http(s) URLs are allowed.");
   }
-  if (session.fullPower) return u; // local trust — no private-range block
+  if (session.fullPower) return u; // local trust, no private-range block
 
   const host = u.hostname;
   if (net.isIP(host)) {
@@ -139,7 +139,7 @@ async function fetchUrl(args: Record<string, unknown>, session: Session): Promis
 
   const isHtml = /html/i.test(contentType) || /^\s*<(?:!doctype|html)/i.test(body);
   const text = !raw && isHtml ? htmlToText(body) : body;
-  const clipped = text.length > maxChars ? `${text.slice(0, maxChars)}\n… [truncated ${text.length - maxChars} chars]` : text;
+  const clipped = text.length > maxChars ? `${text.slice(0, maxChars)}\n... [truncated ${text.length - maxChars} chars]` : text;
 
   const header = `URL: ${res.url || url}\nStatus: ${res.status}\nContent-Type: ${contentType || "unknown"}\n\n`;
   return { content: [{ type: "text", text: untrusted(header + clipped) }] };
@@ -162,7 +162,7 @@ async function searxngSearch(query: string, count: number, baseUrl: string): Pro
   if (!res.ok) {
     throw new Error(
       `SearXNG search failed: ${res.status}` +
-        (res.status === 403 ? " — enable the JSON format in your instance's settings.yml (search.formats: [html, json])." : "")
+        (res.status === 403 ? ", enable the JSON format in your instance's settings.yml (search.formats: [html, json])." : "")
     );
   }
   const data = (await res.json()) as { results?: Array<{ title?: string; url?: string; content?: string }> };
@@ -233,7 +233,7 @@ async function webSearch(args: Record<string, unknown>): Promise<ToolResult> {
       provider = "tavily";
       hits = await tavilySearch(query, count, tavily);
     } else {
-      provider = "duckduckgo (keyless — set SEARXNG_URL for a private, reliable backend)";
+      provider = "duckduckgo (keyless, set SEARXNG_URL for a private, reliable backend)";
       hits = await duckSearch(query, count);
     }
   } catch (e) {
@@ -298,7 +298,7 @@ async function browsePage(args: Record<string, unknown>, session: Session): Prom
     const text: string = selector
       ? await page.locator(selector).first().innerText()
       : await page.evaluate(() => (globalThis as any).document.body.innerText);
-    const clipped = text.length > maxChars ? `${text.slice(0, maxChars)}\n… [truncated]` : text;
+    const clipped = text.length > maxChars ? `${text.slice(0, maxChars)}\n... [truncated]` : text;
     return { content: [{ type: "text", text: untrusted(`URL: ${url}\n\n${clipped}`) }] };
   } finally {
     await browser.close();

@@ -2,7 +2,7 @@
 //
 // • ripgrep does the file walking and matching in native code, so we never read
 //   every file in JS. When `rg` isn't on PATH, callers fall back to the JS
-//   scanner (searchFiles in server.ts) — rg is an optimization, never required.
+//   scanner (searchFiles in server.ts), rg is an optimization, never required.
 // • The glob cache memoizes fast-glob results per (root, patterns) for a few
 //   seconds, invalidated on any write, so repeated tree/find calls don't re-walk.
 
@@ -15,7 +15,7 @@ import { EXCLUDES } from "./util.js";
 // ─── ripgrep binary resolution ─────────────────────────────────────────────
 
 // Resolve an executable to an absolute path by scanning PATH (+ PATHEXT on
-// Windows). Lets us spawn with shell:false — no shell escaping of patterns.
+// Windows). Lets us spawn with shell:false, no shell escaping of patterns.
 function resolveBinary(name: string): string | null {
   const dirs = (process.env.PATH ?? "").split(path.delimiter).filter(Boolean);
   const exts =
@@ -77,7 +77,7 @@ function runRg(root: string, args: string[]): Promise<string | null> {
 }
 
 // Build the --glob arguments: positive include globs first, then the shared
-// EXCLUDES (already `!`-prefixed — rg uses the same negation syntax).
+// EXCLUDES (already `!`-prefixed, rg uses the same negation syntax).
 function globArgs(includeGlobs: string[]): string[] {
   const args: string[] = [];
   for (const g of includeGlobs) args.push("--glob", g);

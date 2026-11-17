@@ -1,4 +1,4 @@
-# dev-context-mcp — common commands.  Run `just` (or `just --list`) to see them.
+# dev-context-mcp, common commands.  Run `just` (or `just --list`) to see them.
 #
 # First `just up` creates a .env with a random auth token. docker compose and
 # these recipes both read it, so you never have to export anything by hand.
@@ -17,7 +17,7 @@ up: env
     @echo ""
     @echo "Up. MCP -> http://127.0.0.1:${MCP_PORT:-3000}/mcp   (token: just token)"
 
-# Start a lean stack (no browser/Playwright — much smaller image).
+# Start a lean stack (no browser/Playwright, much smaller image).
 up-lean: env
     MCP_TARGET=runtime docker compose up -d --build
     @echo "Up (lean). MCP -> http://127.0.0.1:${MCP_PORT:-3000}/mcp"
@@ -95,4 +95,4 @@ env:
       echo "# MCP_ALLOW_EXEC=1"
       echo "# MCP_ALLOW_WRITE=1"
     } > .env
-    echo "Wrote .env — set WORKSPACE to your target repo, then: just up"
+    echo "Wrote .env, set WORKSPACE to your target repo, then: just up"

@@ -1,7 +1,7 @@
 // HTTP / Streamable transport (the "anywhere / containerized" mode).
 //
 // Hardened by design:
-//   • MCP_AUTH_TOKEN is REQUIRED — the server refuses to start without one.
+//   • MCP_AUTH_TOKEN is REQUIRED, the server refuses to start without one.
 //   • Binds 127.0.0.1 by default (MCP_HTTP_HOST to expose; pair with a reverse
 //     proxy + TLS for any non-loopback use).
 //   • One MCP Server + one Session per connection, so concurrent clients are
@@ -97,7 +97,7 @@ export async function startHttpServer(deps: HttpDeps): Promise<void> {
       const server = deps.createServer(deps.makeSession("http"));
       // SDK concrete transports type `onclose` as `(() => void) | undefined`,
       // which trips exactOptionalPropertyTypes against Transport's optional
-      // `onclose?`. The class is structurally a valid Transport — assert at this
+      // `onclose?`. The class is structurally a valid Transport, assert at this
       // boundary only.
       await server.connect(newTransport as unknown as Parameters<typeof server.connect>[0]);
       transport = newTransport;
@@ -122,7 +122,7 @@ export async function startHttpServer(deps: HttpDeps): Promise<void> {
 
   app.listen(port, host, () => {
     console.error(
-      `dev-context-mcp v3 running (http, hardened) on http://${host}:${port}/mcp — bearer token required.`
+      `dev-context-mcp v3 running (http, hardened) on http://${host}:${port}/mcp, bearer token required.`
     );
   });
 }

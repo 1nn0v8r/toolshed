@@ -1,5 +1,5 @@
 // Shared, stateless helpers used across the server, search, and web modules.
-// Nothing here closes over per-session state — pass `root` explicitly.
+// Nothing here closes over per-session state, pass `root` explicitly.
 
 import { stat } from "node:fs/promises";
 import path from "node:path";
@@ -82,7 +82,7 @@ export async function fileExists(filePath: string): Promise<boolean> {
 }
 
 // Resolve `inputPath` against `root` and reject anything that escapes it (`..`).
-// This is the path sandbox — the active root can be moved, but within a given
+// This is the path sandbox, the active root can be moved, but within a given
 // root a tool can never read/write outside it.
 export function safePathIn(root: string, inputPath: string): string {
   const resolved = path.resolve(root, inputPath);
