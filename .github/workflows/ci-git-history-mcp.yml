@@ -1,0 +1,28 @@
+name: git-history-mcp
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/git-history-mcp/**"
+      - ".github/workflows/ci-git-history-mcp.yml"
+      - ".github/workflows/node-tool.yml"
+  pull_request:
+    paths:
+      - "tools/git-history-mcp/**"
+      - ".github/workflows/ci-git-history-mcp.yml"
+      - ".github/workflows/node-tool.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/node-tool.yml
+    with:
+      tool: git-history-mcp
