@@ -49,6 +49,7 @@ const coreTools: Tool[] = [
     name: "run_command",
     description:
       "Run an arbitrary shell command from the active repo root (escape hatch for anything the specialized tools don't cover). " +
+      "Shell: /bin/sh on macOS/Linux; Git Bash on Windows when installed, else cmd.exe (override with MCP_SHELL). " +
       "Captures stdout+stderr, 60s default timeout. Prefer a specialized tool when one fits (get_git_status, run_script, get_typecheck_errors, search_code, grep ...) — they return cleaner, structured output.",
     inputSchema: {
       type: "object",

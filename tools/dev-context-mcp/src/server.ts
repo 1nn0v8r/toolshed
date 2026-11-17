@@ -9,7 +9,7 @@ import fg from "fast-glob";
 import { readFile, writeFile, mkdir, unlink, stat, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { exec as execCb } from "node:child_process";
+import { exec as execCb, spawnSync } from "node:child_process";
 import { promisify } from "node:util";
 
 import { EXCLUDES, untrusted, fileExists, safePathIn, clamp, clip, execErrorText } from "./util.js";
@@ -31,9 +31,28 @@ const exec = promisify(execCb);
 // find_exports keeps its JS/TS-only globs since it matches `export` syntax.
 const CODE_EXTS = "ts,tsx,js,jsx,mjs,cjs,py,go,rs,java,kt,cs,rb,php,swift,vue,svelte,sh";
 
-// Shell used by the run_command tool. Defaults to bash (git-bash on Windows) so
-// commands behave like the user's interactive shell; override with MCP_SHELL.
-const RUN_SHELL = process.env.MCP_SHELL || (process.platform === "win32" ? "bash" : "/bin/sh");
+// Shell used by the run_command tool. Override with MCP_SHELL.
+//   macOS/Linux: /bin/sh
+//   Windows:     Git Bash when installed (POSIX commands behave the same as on
+//                other OSes), otherwise Node's default (cmd.exe via ComSpec).
+// On Windows we never pick System32\bash.exe: that is the WSL launcher, which
+// runs commands inside Linux where Windows paths do not resolve.
+function resolveRunShell(): string | undefined {
+  if (process.env.MCP_SHELL) return process.env.MCP_SHELL;
+  if (process.platform !== "win32") return "/bin/sh";
+
+  const candidates: string[] = [];
+  for (const base of [process.env.ProgramFiles, process.env["ProgramW6432"], process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Programs")]) {
+    if (base) candidates.push(path.join(base, "Git", "bin", "bash.exe"));
+  }
+  const where = spawnSync("where", ["bash"], { encoding: "utf8", windowsHide: true });
+  if (where.status === 0) candidates.push(...where.stdout.split(/\r?\n/).map((l) => l.trim()).filter(Boolean));
+
+  const isWslLauncher = (p: string) => /\\windows\\(system32|sysnative)\\/i.test(p) || /\\windowsapps\\/i.test(p);
+  return candidates.find((p) => !isWslLauncher(p) && existsSync(p));
+}
+
+const RUN_SHELL = resolveRunShell();
 
 function detectRepoRoot(start: string): string {
   // Walk up from the launch directory to the nearest enclosing git repo, so the

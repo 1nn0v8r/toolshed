@@ -1,8 +1,8 @@
 {
   "name": "dev-context-mcp",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "type": "module",
-  "description": "A portable, repo-scoped MCP server: read/search/edit files, run quality checks & shell, browse the web. Runs over stdio (local, full power) or HTTP (hardened, containerizable).",
+  "description": "Repo-scoped MCP server for AI coding assistants: token-capped file search, reads and edits, git and quality checks, shell and web tools. Runs over stdio or hardened HTTP.",
   "main": "dist/server.js",
   "bin": {
     "dev-context-mcp": "dist/server.js"
@@ -11,6 +11,9 @@
     "dist",
     "README.md"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node smoke-test.mjs",
     "smoke": "node smoke-test.mjs",
@@ -18,17 +21,29 @@
     "dev": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "start:http": "node dist/server.js --http"
+    "start:http": "node dist/server.js --http",
+    "prepare": "npm run build"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "claude",
     "ai",
-    "developer-tools"
+    "developer-tools",
+    "claude-code",
+    "cursor",
+    "token-efficiency"
   ],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/dev-context-mcp"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/dev-context-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^5.2.1",

@@ -4,7 +4,7 @@
 FROM node:22-slim AS builder
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY src ./src
 RUN npm run build
 
@@ -17,7 +17,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 
 # Non-root; /workspace is the only writable mount (the repo you operate on).
