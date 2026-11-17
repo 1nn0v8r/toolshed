@@ -128,7 +128,9 @@ export function resolveFileInRoot(root, dir, file) {
  * @param {string[]} roots
  */
 export function relativize(text, roots) {
-  let out = text.replace(/file:\/\/(\/(?=[A-Za-z]:))?/g, "");
+  // Node's reporters percent-encode "~" in file paths (Windows 8.3 names such as
+  // RUNNER~1), so decode it before matching the root.
+  let out = text.replace(/file:\/\/(\/(?=[A-Za-z]:))?/g, "").replace(/%7E/gi, "~");
   const flags = process.platform === "win32" ? "gi" : "g";
   const seen = new Set();
   for (const r of roots) {

@@ -153,3 +153,9 @@ test("pickLocation prefers a frame in the known file", () => {
   assert.deepEqual(pickLocation([], "a/b.js"), { file: "a/b.js" });
   assert.deepEqual(pickLocation([]), {});
 });
+
+test("relativize: decodes percent-encoded tilde from Node reporters (Windows 8.3 names)", () => {
+  const root = "C:/Work/PROJEC~1/proj";
+  const reported = "C:/Work/PROJEC%7E1/proj/test/sample.test.js";
+  assert.equal(relativize(reported, [root]), "test/sample.test.js");
+});
