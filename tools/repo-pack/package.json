@@ -1,0 +1,48 @@
+{
+  "name": "repo-pack",
+  "version": "0.1.0",
+  "description": "Bundle chosen files of a project into one prompt-ready file within a token budget.",
+  "type": "module",
+  "bin": {
+    "repo-pack": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "llm",
+    "prompt",
+    "context",
+    "tokens",
+    "cli",
+    "repository"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/repo-pack"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/repo-pack#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "dependencies": {
+    "picomatch": "^4.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/picomatch": "^3.0.1",
+    "typescript": "^5.5.0"
+  }
+}

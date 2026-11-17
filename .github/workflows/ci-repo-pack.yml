@@ -1,0 +1,28 @@
+name: repo-pack
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/repo-pack/**"
+      - ".github/workflows/ci-repo-pack.yml"
+      - ".github/workflows/node-tool.yml"
+  pull_request:
+    paths:
+      - "tools/repo-pack/**"
+      - ".github/workflows/ci-repo-pack.yml"
+      - ".github/workflows/node-tool.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/node-tool.yml
+    with:
+      tool: repo-pack
