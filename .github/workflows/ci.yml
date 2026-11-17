@@ -1,0 +1,160 @@
+# One CI workflow for every tool. It runs on every push and pull request (so the
+# "ci" status always reports), but only tests the tools whose folders changed.
+#
+# Runners: set the repository variable TEST_RUNNERS to a JSON array of runner
+# labels, one per machine or OS, for example ["self-hosted-linux","self-hosted-windows"].
+# Give each of your machines that label in its runner settings. Without the
+# variable, the three GitHub-hosted systems are used.
+#
+# Security: self-hosted machines run whatever code a workflow runs. The test jobs
+# therefore skip pull requests from forks. Only pushes and pull requests from
+# branches in this repository reach your machines.
+
+name: ci
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: detect changed tools
+    runs-on: ubuntu-latest
+    outputs:
+      tools: ${{ steps.detect.outputs.tools }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: List tools to test
+        id: detect
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          all=$(ls -d tools/*/ | xargs -n1 basename | sort)
+          # Run everything for manual runs, and when shared CI or the repo config changes.
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            changed="$all"
+          else
+            files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" 2>/dev/null || echo "__all__")
+            if printf '%s\n' "$files" | grep -qE '^(\.github/workflows/ci\.yml|__all__)$'; then
+              changed="$all"
+            else
+              changed=$(printf '%s\n' "$files" | grep -E '^tools/[^/]+/' | cut -d/ -f2 | sort -u || true)
+            fi
+          fi
+          json=$(printf '%s\n' $changed | grep -v '^$' | jq -R . | jq -sc . 2>/dev/null || echo '[]')
+          [ -z "$json" ] && json='[]'
+          echo "tools=$json" >> "$GITHUB_OUTPUT"
+          echo "Testing: $json"
+
+  test:
+    name: ${{ matrix.tool }} / ${{ matrix.os }} / Node ${{ matrix.node }}
+    needs: changes
+    if: >-
+      needs.changes.outputs.tools != '[]' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.changes.outputs.tools) }}
+        os: ${{ fromJSON(vars.TEST_RUNNERS || '["ubuntu-latest","windows-latest","macos-latest"]') }}
+        node: ["20", "22"]
+    defaults:
+      run:
+        working-directory: tools/${{ matrix.tool }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  integration:
+    name: db-schema-mcp integration
+    needs: changes
+    if: >-
+      contains(needs.changes.outputs.tools, 'db-schema-mcp') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    defaults:
+      run:
+        working-directory: tools/db-schema-mcp
+    env:
+      TEST_PG_URL: postgres://postgres:test@127.0.0.1:5432/postgres
+      TEST_MYSQL_URL: mysql://root:test@127.0.0.1:3306/test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm test
+
+  # The single required check for tool tests. It passes when nothing changed
+  # or when every test job succeeded, and fails otherwise.
+  ci:
+    name: ci
+    needs: [changes, test, integration]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarize
+        env:
+          RESULT_TEST: ${{ needs.test.result }}
+          RESULT_INT: ${{ needs.integration.result }}
+          TOOLS: ${{ needs.changes.outputs.tools }}
+        run: |
+          echo "tools: $TOOLS"
+          echo "test: $RESULT_TEST, integration: $RESULT_INT"
+          if [ "$TOOLS" = "[]" ]; then exit 0; fi
+          for r in "$RESULT_TEST" "$RESULT_INT"; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then exit 1; fi
+          done
