@@ -169,6 +169,7 @@ Limits to know about:
 - Lines that are entirely a comment are ignored. Reads inside block comments that do not start the line, strings or generated code are not.
 - Detection is pattern based, not a full parse. Names must be literals.
 - Example and env files accept `KEY=VALUE`, `export KEY=`, comments, blank lines, quoted values (including multi-line) and CRLF.
+- In the example file, a commented-out assignment of an UPPER_CASE key (`# TAVILY_API_KEY=`) documents an **optional** setting: it counts as documented, but it is not required in your `.env`. Prose comments are ignored.
 
 ## Exit codes
 

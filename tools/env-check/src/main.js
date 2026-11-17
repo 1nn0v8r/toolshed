@@ -167,10 +167,14 @@ async function runInner(argv, cwd, stdout) {
     for (const d of res.dynamic) dynamic.push({ file: rel, line: d.line });
   }
 
-  const exampleKeys = new Set(exampleFound ? parseEnvKeys(fs.readFileSync(examplePath, "utf8")).map((k) => k.key) : []);
+  // Commented-out assignments (`# KEY=`) in the example document optional keys.
+  const exampleParsed = exampleFound ? parseEnvKeys(fs.readFileSync(examplePath, "utf8"), { commented: true }) : [];
+  const exampleKeys = new Set(exampleParsed.map((k) => k.key));
+  const activeKeys = new Set(exampleParsed.filter((k) => !k.optional).map((k) => k.key));
+  const optionalKeys = new Set([...exampleKeys].filter((k) => !activeKeys.has(k)));
   const envKeys = envRel ? new Set(parseEnvKeys(fs.readFileSync(path.resolve(dir, envRel), "utf8")).map((k) => k.key)) : null;
 
-  const cmp = compare(used, exampleKeys, envKeys, ignored);
+  const cmp = compare(used, exampleKeys, envKeys, ignored, optionalKeys);
   let missing = cmp.missing;
   /** @type {string[]} */
   let fixed = [];

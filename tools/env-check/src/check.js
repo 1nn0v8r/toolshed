@@ -85,8 +85,9 @@ export function makeIgnore(patterns) {
  * @param {Set<string>} exampleKeys
  * @param {Set<string> | null} envKeys null when there is no env file to compare
  * @param {(name: string) => boolean} ignored
+ * @param {Set<string>} [optionalKeys] example keys documented only as comments; not required in .env
  */
-export function compare(used, exampleKeys, envKeys, ignored) {
+export function compare(used, exampleKeys, envKeys, ignored, optionalKeys = new Set()) {
   /** @type {UsedVar[]} */
   const missing = [];
   for (const [name, locations] of [...used].sort(([a], [b]) => a.localeCompare(b))) {
@@ -94,6 +95,8 @@ export function compare(used, exampleKeys, envKeys, ignored) {
     missing.push({ name, locations });
   }
   const unused = [...exampleKeys].filter((k) => !ignored(k) && !used.has(k)).sort();
-  const missingInEnv = envKeys ? [...exampleKeys].filter((k) => !ignored(k) && !envKeys.has(k)).sort() : [];
+  const missingInEnv = envKeys
+    ? [...exampleKeys].filter((k) => !ignored(k) && !optionalKeys.has(k) && !envKeys.has(k)).sort()
+    : [];
   return { missing, unused, missingInEnv };
 }

@@ -195,3 +195,21 @@ test("makeIgnore: OS built-ins match case-insensitively, user patterns stay case
   assert.equal(ignored("DATABASE_URL"), false);
   assert.equal(ignored("PORT"), false);
 });
+
+test("parseEnvKeys: commented UPPER_CASE assignments are optional keys only when asked", () => {
+  const text = "# Copy this file\n# OPTIONAL_KEY=\n#   export OTHER=1\n# note=lowercase prose\n# Generate: openssl rand\nREAL=1\n";
+  assert.deepEqual(parseEnvKeys(text).map((k) => k.key), ["REAL"]);
+  const all = parseEnvKeys(text, { commented: true });
+  assert.deepEqual(all.map((k) => [k.key, Boolean(k.optional)]), [["OPTIONAL_KEY", true], ["OTHER", true], ["REAL", false]]);
+});
+
+test("compare: optional example keys count as documented but are not required in .env", () => {
+  const used = new Map([["OPTIONAL_KEY", [{ file: "a.js", line: 1 }]], ["REAL", [{ file: "a.js", line: 2 }]]]);
+  const example = new Set(["OPTIONAL_KEY", "REAL"]);
+  const env = new Set(["REAL"]);
+  const r = compare(used, example, env, makeIgnore([]), new Set(["OPTIONAL_KEY"]));
+  assert.deepEqual(r.missing, []);
+  assert.deepEqual(r.missingInEnv, []);
+  const strict = compare(used, example, env, makeIgnore([]));
+  assert.deepEqual(strict.missingInEnv, ["OPTIONAL_KEY"]);
+});

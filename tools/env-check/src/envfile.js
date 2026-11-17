@@ -1,8 +1,11 @@
 // @ts-check
 
 /**
- * @typedef {{ key: string, line: number }} EnvKey
+ * @typedef {{ key: string, line: number, optional?: boolean }} EnvKey
  */
+
+/** A commented-out assignment such as `# TAVILY_API_KEY=` documents an optional key. */
+const COMMENTED_KEY = /^#\s*(?:export\s+)?([A-Z_][A-Z0-9_]*)\s*=/;
 
 /**
  * Index of the closing quote in `s`, or -1. Double quotes and backticks honour backslash escapes.
@@ -23,16 +26,24 @@ function closeIndex(s, q) {
 /**
  * Extract the key names from dotenv-style text. Values are never returned, so they cannot leak.
  * Handles `export KEY=`, comments, blank lines, quoted values (including multi-line) and CRLF.
+ * With `commented: true`, commented-out assignments of UPPER_CASE keys
+ * (`# KEY=value`) are returned too, flagged `optional: true`.
  * @param {string} text
+ * @param {{ commented?: boolean }} [opts]
  * @returns {EnvKey[]}
  */
-export function parseEnvKeys(text) {
+export function parseEnvKeys(text, opts = {}) {
   const lines = text.replace(/^﻿/, "").split(/\r\n|\n|\r/);
   /** @type {EnvKey[]} */
   const keys = [];
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
-    if (!t || t.startsWith("#")) continue;
+    if (!t) continue;
+    if (t.startsWith("#")) {
+      const c = opts.commented ? COMMENTED_KEY.exec(t) : null;
+      if (c) keys.push({ key: c[1], line: i + 1, optional: true });
+      continue;
+    }
     const m = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_.-]*)\s*=(.*)$/.exec(t);
     if (!m) continue;
     keys.push({ key: m[1], line: i + 1 });
