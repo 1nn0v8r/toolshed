@@ -1,0 +1,22 @@
+# Store text with LF line endings so every OS produces identical files.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binary assets.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.zip  binary
+*.woff binary
+*.woff2 binary
+
+# Collapse lockfiles in GitHub diffs.
+package-lock.json linguist-generated=true -diff
