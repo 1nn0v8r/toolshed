@@ -17,14 +17,25 @@ const moduleArg = {
   },
 } as const;
 
+const repoRootArg = {
+  repoRoot: {
+    type: "string",
+    description:
+      "Optional absolute path to the repo root for this call. " +
+      "Overrides the session default (set by set_repo_root). " +
+      "Use this for parallel-safe multi-repo work.",
+  },
+} as const;
+
 const coreTools: Tool[] = [
-  // ── Repo ────────────────────────────────────────────────────────────────
+  // -- Repo --------------------------------------------------------------------
   {
     name: "set_repo_root",
     description:
       "Point the dev-context server at a different repository for the rest of this session. " +
       "Pass an absolute path to a repo root; all subsequent file/search/git/quality tools operate relative to it. " +
-      "By default the server auto-detects the git root of the directory it was launched in, so you only need this to switch to a different repo (or to a subdirectory you want treated as the root).",
+      "By default the server auto-detects the git root of the directory it was launched in, so you only need this to switch to a different repo (or to a subdirectory you want treated as the root). " +
+      "For parallel-safe multi-repo work, prefer the repoRoot argument on each tool instead.",
     inputSchema: {
       type: "object",
       properties: {
@@ -33,15 +44,16 @@ const coreTools: Tool[] = [
       required: ["path"],
     },
   },
-  // ── Shell / FS ──────────────────────────────────────────────────────────
+  // -- Shell / FS --------------------------------------------------------------
   {
     name: "run_command",
     description:
       "Run an arbitrary shell command from the active repo root (escape hatch for anything the specialized tools don't cover). " +
-      "Captures stdout+stderr, 60s default timeout. Prefer a specialized tool when one fits (get_git_status, run_script, get_typecheck_errors, search_code, grep …) — they return cleaner, structured output.",
+      "Captures stdout+stderr, 60s default timeout. Prefer a specialized tool when one fits (get_git_status, run_script, get_typecheck_errors, search_code, grep ...) — they return cleaner, structured output.",
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         command: { type: "string", description: "Shell command to execute." },
         cwd: {
           type: "string",
@@ -59,6 +71,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         path: { type: "string", description: "Relative path from repo root. Defaults to the repo root." },
       },
     },
@@ -70,6 +83,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         pattern: { type: "string", description: "Glob pattern, e.g. '**/*.ts'." },
         limit: { type: "number", description: "Max files to return. Default 200, max 1000." },
       },
@@ -83,6 +97,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         pattern: { type: "string", description: "Regular expression (JavaScript syntax)." },
         glob: {
           type: "string",
@@ -94,14 +109,17 @@ const coreTools: Tool[] = [
       required: ["pattern"],
     },
   },
-  // ── File reading & code search ────────────────────────────────────────────
+  // -- File reading & code search -----------------------------------------------
   {
     name: "get_project_tree",
     description:
       "Get the project directory tree. Always call this first at the start of any analysis, audit, or refactor task before reading individual files.",
     inputSchema: {
       type: "object",
-      properties: { depth: { type: "number", description: "Tree depth. Default 3, max 5." } },
+      properties: {
+        ...repoRootArg,
+        depth: { type: "number", description: "Tree depth. Default 3, max 5." },
+      },
     },
   },
   {
@@ -109,7 +127,7 @@ const coreTools: Tool[] = [
     description:
       "Read package.json and return scripts and dependency names. Call this early in any task involving build, deps, or scripts — do not run 'cat package.json' or 'ls' in bash. " +
       "Pass `module` to target a subdirectory's package.json in a monorepo (e.g. 'packages/api').",
-    inputSchema: { type: "object", properties: { ...moduleArg } },
+    inputSchema: { type: "object", properties: { ...repoRootArg, ...moduleArg } },
   },
   {
     name: "read_file_range",
@@ -118,6 +136,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         path: { type: "string" },
         startLine: { type: "number" },
         endLine: { type: "number" },
@@ -132,6 +151,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         paths: {
           type: "array",
           items: { type: "string" },
@@ -147,13 +167,21 @@ const coreTools: Tool[] = [
     name: "search_code",
     description:
       "Search source code and config files for a query string. Use this instead of 'grep' or 'findstr' shell commands.",
-    inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+    inputSchema: {
+      type: "object",
+      properties: { ...repoRootArg, query: { type: "string" } },
+      required: ["query"],
+    },
   },
   {
     name: "search_docs",
     description:
       "Search markdown and documentation files. Use this instead of 'grep' on .md files or reading entire docs manually.",
-    inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+    inputSchema: {
+      type: "object",
+      properties: { ...repoRootArg, query: { type: "string" } },
+      required: ["query"],
+    },
   },
   {
     name: "read_doc",
@@ -161,7 +189,11 @@ const coreTools: Tool[] = [
       "Read a single markdown document by relative path. Use read_multiple_files if you need more than one doc.",
     inputSchema: {
       type: "object",
-      properties: { path: { type: "string" }, maxLines: { type: "number" } },
+      properties: {
+        ...repoRootArg,
+        path: { type: "string" },
+        maxLines: { type: "number" },
+      },
       required: ["path"],
     },
   },
@@ -169,13 +201,21 @@ const coreTools: Tool[] = [
     name: "find_api_endpoint",
     description:
       "Search for an API route or endpoint definition by method or path text. Use this instead of grep-ing route files manually.",
-    inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+    inputSchema: {
+      type: "object",
+      properties: { ...repoRootArg, query: { type: "string" } },
+      required: ["query"],
+    },
   },
   {
     name: "find_schema",
     description:
       "Search for database schemas, Zod validators, and TypeScript types. Call this before manually reading schema files.",
-    inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+    inputSchema: {
+      type: "object",
+      properties: { ...repoRootArg, query: { type: "string" } },
+      required: ["query"],
+    },
   },
   {
     name: "find_references",
@@ -183,7 +223,10 @@ const coreTools: Tool[] = [
       "Find all files that reference a function, variable, class, or symbol name. Use instead of grep/findstr for symbol lookups.",
     inputSchema: {
       type: "object",
-      properties: { symbol: { type: "string", description: "Symbol name to find references for." } },
+      properties: {
+        ...repoRootArg,
+        symbol: { type: "string", description: "Symbol name to find references for." },
+      },
       required: ["symbol"],
     },
   },
@@ -193,11 +236,48 @@ const coreTools: Tool[] = [
       "Find all export statements for a given name across the codebase. Use before tracing an import chain manually.",
     inputSchema: {
       type: "object",
-      properties: { name: { type: "string", description: "Export name to search for." } },
+      properties: {
+        ...repoRootArg,
+        name: { type: "string", description: "Export name to search for." },
+      },
       required: ["name"],
     },
   },
-  // ── Project context ────────────────────────────────────────────────────────
+  // -- Project manifest ---------------------------------------------------------
+  {
+    name: "get_project_manifest",
+    description:
+      "Return a compact structured JSON summary of the current project: name, stack, modules/services, key directories, " +
+      "architecture rules, security boundaries, deployment notes, and coding standards. " +
+      "Reads .claude/manifest.json or .claude/project.json first; falls back to auto-detection from package.json and directory structure. " +
+      "Output is capped under 4,000 tokens. Never includes secrets or env values. " +
+      "Call this at the start of a session to orient before exploring files.",
+    inputSchema: { type: "object", properties: { ...repoRootArg } },
+  },
+  // -- Architecture docs --------------------------------------------------------
+  {
+    name: "get_architecture_docs",
+    description:
+      "Read curated architecture documents from the active repo root only. " +
+      "Supported directories: .claude/docs/, docs/architecture/, docs/adr/. " +
+      "Returns each document's title, path, type (architecture | adr | guide), summary, and key rules. " +
+      "The returned documents apply only to the currently selected repo. " +
+      "Does not search the whole repo or dump full documents. Output is capped under 4,000 tokens. " +
+      "Use search_docs for keyword search; use this for structured architecture context.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...repoRootArg,
+        path: {
+          type: "string",
+          description:
+            "Optional relative path to a specific doc to return in full (still capped). " +
+            "Omit to get the index of all curated docs with summaries.",
+        },
+      },
+    },
+  },
+  // -- Project context ----------------------------------------------------------
   {
     name: "get_audit_summaries",
     description:
@@ -205,6 +285,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         module: { type: "string", description: "Optional module filter, e.g. 'packages/api'. Omit for all audits." },
         maxLinesEach: { type: "number", description: "Max lines per audit file. Default 120." },
       },
@@ -214,7 +295,11 @@ const coreTools: Tool[] = [
     name: "search_audits",
     description:
       "Search audit files in .claude/audits/ for a specific term or finding. Use instead of grep on audit files.",
-    inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+    inputSchema: {
+      type: "object",
+      properties: { ...repoRootArg, query: { type: "string" } },
+      required: ["query"],
+    },
   },
   {
     name: "get_project_context",
@@ -222,7 +307,10 @@ const coreTools: Tool[] = [
       "Read project notes: log.txt, 'my thoughts.txt', .claude/notes/, and any journal files at repo root. Call this at the start of a session instead of manually cat-ing these files.",
     inputSchema: {
       type: "object",
-      properties: { maxLinesEach: { type: "number", description: "Max lines per file. Default 60." } },
+      properties: {
+        ...repoRootArg,
+        maxLinesEach: { type: "number", description: "Max lines per file. Default 60." },
+      },
     },
   },
   {
@@ -232,6 +320,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         commits: { type: "number", description: "Number of recent commits to include. Default 10." },
         includeDiff: { type: "boolean", description: "Include diff of staged files. Default false." },
       },
@@ -240,38 +329,41 @@ const coreTools: Tool[] = [
   {
     name: "get_recent_changes",
     description:
-      "Get files changed in recent git commits with their diffs. Use instead of 'git show' or 'git diff HEAD~N' in bash.",
+      "Get files changed in recent git commits plus a diff stat (no full patch). Use instead of 'git log --name-only' or 'git diff --stat' in bash; use run_command for a full diff.",
     inputSchema: {
       type: "object",
-      properties: { commits: { type: "number", description: "How many recent commits to include. Default 3." } },
+      properties: {
+        ...repoRootArg,
+        commits: { type: "number", description: "How many recent commits to include. Default 3." },
+      },
     },
   },
   {
     name: "get_env_vars",
     description:
       "List environment variable keys from .env, .env.example, .env.local etc. Returns keys only, never values. Use instead of cat-ing env files.",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: { type: "object", properties: { ...repoRootArg } },
   },
-  // ── Quality ──────────────────────────────────────────────────────────────
+  // -- Quality ------------------------------------------------------------------
   {
     name: "get_typecheck_errors",
     description:
       "Run TypeScript typecheck and return compiler output. Call this instead of running tsc manually in bash. " +
       "Pass `module` to typecheck a subdirectory/package in a monorepo (e.g. 'packages/api') — required when the repo root has no package.json of its own.",
-    inputSchema: { type: "object", properties: { ...moduleArg } },
+    inputSchema: { type: "object", properties: { ...repoRootArg, ...moduleArg } },
   },
   {
     name: "get_test_failures",
     description:
       "Run the test suite and return output. Call this instead of running 'npm test' in bash. " +
       "Pass `module` to run tests for a subdirectory/package in a monorepo (e.g. 'packages/api') — required when the repo root has no package.json of its own.",
-    inputSchema: { type: "object", properties: { ...moduleArg } },
+    inputSchema: { type: "object", properties: { ...repoRootArg, ...moduleArg } },
   },
   {
     name: "find_todos",
     description:
       "Find TODO, FIXME, HACK, and NOTE comments across the codebase. Use instead of grep-ing for these patterns.",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: { type: "object", properties: { ...repoRootArg } },
   },
   {
     name: "run_script",
@@ -281,13 +373,14 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         script: { type: "string", description: "The npm script name as defined in package.json scripts." },
         ...moduleArg,
       },
       required: ["script"],
     },
   },
-  // ── Write ──────────────────────────────────────────────────────────────────
+  // -- Write --------------------------------------------------------------------
   {
     name: "write_file",
     description:
@@ -296,6 +389,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         path: {
           type: "string",
           description: "Relative path from repo root. Parent directories are created automatically.",
@@ -314,6 +408,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         path: { type: "string", description: "Relative path from repo root." },
         oldStr: { type: "string", description: "Exact string to find and replace. Must appear exactly once in the file." },
         newStr: { type: "string", description: "Replacement string. Pass empty string to delete the matched block." },
@@ -329,6 +424,7 @@ const coreTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        ...repoRootArg,
         path: { type: "string", description: "Relative path from repo root." },
         confirm: { type: "boolean", description: "Must be true to proceed. Prevents accidental deletion." },
       },

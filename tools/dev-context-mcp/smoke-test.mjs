@@ -12,9 +12,9 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import http from "node:http";
 import path from "node:path";
-import os from "node:os";
-import fs from "node:fs";
 import process from "node:process";
+import fs from "node:fs";
+import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -161,6 +161,82 @@ async function main() {
   check("MCP_ALLOW_EXEC reveals run_command", hn2.includes("run_command"));
   await hc2.close();
   b.kill();
+
+  // ── 4. parallel repoRoot isolation ──────────────────────────────────────────
+  // Create two temp dirs with minimal repo content.
+  const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-root-test-"));
+  const repoA = path.join(tmpBase, "repo-a");
+  const repoB = path.join(tmpBase, "repo-b");
+  fs.mkdirSync(repoA, { recursive: true });
+  fs.mkdirSync(repoB, { recursive: true });
+  fs.writeFileSync(path.join(repoA, "package.json"), JSON.stringify({ name: "repo-a", version: "1.0.0", scripts: {} }));
+  fs.writeFileSync(path.join(repoB, "package.json"), JSON.stringify({ name: "repo-b", version: "2.0.0", scripts: {} }));
+  fs.mkdirSync(path.join(repoA, "src"), { recursive: true });
+  fs.mkdirSync(path.join(repoB, "lib"), { recursive: true });
+  fs.writeFileSync(path.join(repoA, "src", "index.ts"), "export const a = 1;\n");
+  fs.writeFileSync(path.join(repoB, "lib", "main.ts"), "export const b = 2;\n");
+
+  const cp = await stdioClient();
+
+  // 4a: get_project_tree with repoRoot A
+  const treeA = text(await cp.callTool({ name: "get_project_tree", arguments: { depth: 2, repoRoot: repoA } }));
+  check("repoRoot A: get_project_tree sees src/", treeA.includes("src") && treeA.includes("index.ts"));
+
+  // 4b: get_project_tree with repoRoot B
+  const treeB = text(await cp.callTool({ name: "get_project_tree", arguments: { depth: 2, repoRoot: repoB } }));
+  check("repoRoot B: get_project_tree sees lib/", treeB.includes("lib") && treeB.includes("main.ts"));
+
+  // 4c: get_project_manifest with repoRoot A and B
+  const manA = text(await cp.callTool({ name: "get_project_manifest", arguments: { repoRoot: repoA } }));
+  check("repoRoot A: manifest name is repo-a", manA.includes("repo-a"));
+  const manB = text(await cp.callTool({ name: "get_project_manifest", arguments: { repoRoot: repoB } }));
+  check("repoRoot B: manifest name is repo-b", manB.includes("repo-b"));
+
+  // 4d: get_architecture_docs with repoRoot A and B (no docs dir = empty)
+  const archA = text(await cp.callTool({ name: "get_architecture_docs", arguments: { repoRoot: repoA } }));
+  check("repoRoot A: arch docs returns safely", archA.length > 0);
+  const archB = text(await cp.callTool({ name: "get_architecture_docs", arguments: { repoRoot: repoB } }));
+  check("repoRoot B: arch docs returns safely", archB.length > 0);
+
+  // 4e: search_code with repoRoot A and B
+  const sA = text(await cp.callTool({ name: "search_code", arguments: { query: "export const", repoRoot: repoA } }));
+  check("repoRoot A: search finds 'a'", sA.includes("const a"));
+  const sB = text(await cp.callTool({ name: "search_code", arguments: { query: "export const", repoRoot: repoB } }));
+  check("repoRoot B: search finds 'b'", sB.includes("const b"));
+
+  await cp.close();
+
+  // 4f/4g: hardened mode - invalid repoRoot + path traversal
+  const portC = 39585;
+  const cProc = startHttp(portC, { MCP_AUTH_TOKEN: TOKEN, REPO_ROOT: repoA });
+  check("http server (confined) boots", await waitHealth(portC));
+  const hc3 = await httpClient(portC, TOKEN);
+
+  // 4f: repoRoot outside rootBase must fail
+  let escFailed = false;
+  try {
+    const esc = await hc3.callTool({ name: "get_project_tree", arguments: { depth: 1, repoRoot: repoB } });
+    escFailed = esc.isError === true || text(esc).includes("denied");
+  } catch (e) {
+    escFailed = String(e.message ?? e).includes("denied");
+  }
+  check("hardened: repoRoot outside rootBase fails", escFailed);
+
+  // 4g: path traversal must fail
+  let travFailed = false;
+  try {
+    const trav = await hc3.callTool({ name: "get_project_tree", arguments: { depth: 1, repoRoot: path.join(repoA, "..", "..") } });
+    travFailed = trav.isError === true || text(trav).includes("denied");
+  } catch (e) {
+    travFailed = String(e.message ?? e).includes("denied");
+  }
+  check("hardened: path traversal rejected", travFailed);
+
+  await hc3.close();
+  cProc.kill();
+
+  // Cleanup temp dirs
+  fs.rmSync(tmpBase, { recursive: true, force: true });
 
   console.log(`\n${failures === 0 ? "✅ ALL PASS" : `❌ ${failures} FAILURE(S)`}`);
   process.exit(failures === 0 ? 0 : 1);

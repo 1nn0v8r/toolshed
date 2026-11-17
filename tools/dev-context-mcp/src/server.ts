@@ -12,7 +12,7 @@ import path from "node:path";
 import { exec as execCb } from "node:child_process";
 import { promisify } from "node:util";
 
-import { EXCLUDES, untrusted, fileExists, safePathIn, clamp } from "./util.js";
+import { EXCLUDES, untrusted, fileExists, safePathIn, clamp, clip, execErrorText } from "./util.js";
 import {
   TOOL_CAPS,
   capabilityError,
@@ -26,6 +26,10 @@ import { rgFilesWithMatches, rgGrep, cachedGlob, invalidateGlobCache } from "./s
 import { isWebTool, handleWebTool } from "./web.js";
 
 const exec = promisify(execCb);
+
+// Source-file extensions searched by code tools (brace-expansion body for globs).
+// find_exports keeps its JS/TS-only globs since it matches `export` syntax.
+const CODE_EXTS = "ts,tsx,js,jsx,mjs,cjs,py,go,rs,java,kt,cs,rb,php,swift,vue,svelte,sh";
 
 // Shell used by the run_command tool. Defaults to bash (git-bash on Windows) so
 // commands behave like the user's interactive shell; override with MCP_SHELL.
@@ -76,19 +80,27 @@ export function createServer(session: Session): Server {
     { capabilities: { tools: {} } }
   );
 
-  // ── Per-session helpers (close over session.root) ──────────────────────────
+  // ── Per-session helpers ─────────────────────────────────────────────────────
 
-  const safePath = (inputPath: string) => safePathIn(session.root, inputPath);
-
-  const resolveModuleDir = (input?: unknown): { dir: string; label: string } => {
-    const raw = String(input ?? "").trim();
-    if (!raw || raw === ".") return { dir: session.root, label: "." };
-    return { dir: safePath(raw), label: raw };
+  // Resolve per-call repoRoot override (validated through confineRoot) or fall
+  // back to the session default. Every repo-aware handler calls this first.
+  const resolveRoot = (args: Record<string, unknown>): string => {
+    const override = String(args.repoRoot ?? "").trim();
+    if (!override) return session.root;
+    return confineRoot(session, path.resolve(override));
   };
 
-  const readPackageJson = async (dir: string) => {
+  const safePath = (root: string, inputPath: string) => safePathIn(root, inputPath);
+
+  const resolveModuleDir = (root: string, input?: unknown): { dir: string; label: string } => {
+    const raw = String(input ?? "").trim();
+    if (!raw || raw === ".") return { dir: root, label: "." };
+    return { dir: safePath(root, raw), label: raw };
+  };
+
+  const readPackageJson = async (root: string, dir: string) => {
     const packagePath = path.join(dir, "package.json");
-    const relative = path.relative(session.root, packagePath);
+    const relative = path.relative(root, packagePath);
     if (relative.startsWith("..") || path.isAbsolute(relative)) {
       throw new Error("Invalid path: outside repo root.");
     }
@@ -104,14 +116,14 @@ export function createServer(session: Session): Server {
         timeout: 60_000,
         maxBuffer: 1024 * 500,
       });
-      return (stdout || stderr || "Command completed with no output.").slice(0, 20_000);
+      const body = `${stdout ?? ""}${stderr ? `\n[stderr]\n${stderr}` : ""}`.trim();
+      return clip(body || "Command completed with no output.", 20_000);
     } catch (error: unknown) {
-      const err = error as { stdout?: string; stderr?: string; message?: string };
-      return `${err.stdout ?? ""}\n${err.stderr ?? ""}\n${err.message ?? ""}`.slice(0, 20_000);
+      return clip(execErrorText(error), 20_000);
     }
   };
 
-  const searchFiles = async (options: {
+  const searchFiles = async (root: string, options: {
     query: string;
     patterns: string[];
     maxResults: number;
@@ -119,6 +131,8 @@ export function createServer(session: Session): Server {
     emptyMessage: string;
     matchAll?: boolean;
     regex?: boolean;
+    /** Return results without the untrusted prefix (caller wraps once). */
+    raw?: boolean;
   }): Promise<string> => {
     const rawQuery = options.query.trim();
     if (!rawQuery) return "Please provide a search query.";
@@ -145,14 +159,14 @@ export function createServer(session: Session): Server {
 
     // ripgrep narrows to files that actually contain a match (native, fast);
     // fall back to globbing every candidate file when rg isn't available.
-    let files = await rgFilesWithMatches(session.root, {
+    let files = await rgFilesWithMatches(root, {
       pattern: rawQuery,
       fixed,
       ignoreCase: true,
       includeGlobs: options.patterns,
     });
     if (files === null) {
-      files = await cachedGlob(session.root, [...options.patterns, ...EXCLUDES], {
+      files = await cachedGlob(root, [...options.patterns, ...EXCLUDES], {
         absolute: true,
         onlyFiles: true,
       });
@@ -162,7 +176,7 @@ export function createServer(session: Session): Server {
     const results: string[] = [];
 
     for (const file of files) {
-      const relativePath = path.relative(session.root, file);
+      const relativePath = path.relative(root, file);
       if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) continue;
 
       const raw = await readFile(file, "utf8");
@@ -184,9 +198,9 @@ export function createServer(session: Session): Server {
       if (results.length >= options.maxResults) break;
     }
 
-    return results.length > 0
-      ? untrusted(results.join("\n\n---\n\n"))
-      : options.emptyMessage;
+    if (results.length === 0) return options.emptyMessage;
+    const joined = results.slice(0, options.maxResults).join("\n\n---\n\n");
+    return options.raw ? joined : untrusted(joined);
   };
 
   // ── tools/list (filtered to the session's enabled capabilities) ────────────
@@ -236,29 +250,31 @@ export function createServer(session: Session): Server {
 
     // ── get_project_tree ──────────────────────────────────────────────────────
     if (toolName === "get_project_tree") {
+      const root = resolveRoot(args);
       const depth = clamp(args.depth, 3, 5, 1);
 
-      const files = await cachedGlob(session.root, ["**/*", ...EXCLUDES, "!**/.claude/audits/**"], {
+      const files = await cachedGlob(root, ["**/*", ...EXCLUDES, "!**/.claude/audits/**"], {
         onlyFiles: true,
         dot: false,
       });
 
-      const trimmed = files
-        .filter((f) => f.split(/[\\/]/).length <= depth)
-        .slice(0, 300)
-        .sort()
-        .join("\n");
+      const inDepth = files.filter((f) => f.split(/[\\/]/).length <= depth).sort();
+      const trimmed = inDepth.slice(0, 300).join("\n");
+      const more = inDepth.length > 300
+        ? `\n\n(${inDepth.length - 300} more files; lower depth or use list_directory/find_files)`
+        : "";
 
-      return { content: [{ type: "text", text: `Repo root: ${session.root}\n\n${trimmed}` }] };
+      return { content: [{ type: "text", text: `Repo root: ${root}\n\n${trimmed}${more}` }] };
     }
 
     // ── run_command ───────────────────────────────────────────────────────────
     if (toolName === "run_command") {
+      const root = resolveRoot(args);
       const command = String(args.command ?? "").trim();
       if (!command) throw new Error("command is required.");
 
       const cwdArg = String(args.cwd ?? "").trim();
-      const cwd = cwdArg && cwdArg !== "." ? safePath(cwdArg) : session.root;
+      const cwd = cwdArg && cwdArg !== "." ? safePath(root, cwdArg) : root;
       const timeout = clamp(args.timeoutMs, 60_000, 120_000, 1);
 
       try {
@@ -269,18 +285,17 @@ export function createServer(session: Session): Server {
           shell: RUN_SHELL,
         });
         const body = `${stdout ?? ""}${stderr ? `\n[stderr]\n${stderr}` : ""}`.trim() || "(no output)";
-        return { content: [{ type: "text", text: untrusted(`$ ${command}\n\n${body}`.slice(0, 30_000)) }] };
+        return { content: [{ type: "text", text: untrusted(`$ ${command}\n\n${clip(body, 30_000)}`) }] };
       } catch (error: unknown) {
-        const err = error as { stdout?: string; stderr?: string; message?: string; code?: number };
-        const body = `[exit ${err.code ?? "?"}]\n${err.stdout ?? ""}\n${err.stderr ?? ""}\n${err.message ?? ""}`.trim();
-        return { content: [{ type: "text", text: untrusted(`$ ${command}\n\n${body}`.slice(0, 30_000)) }] };
+        return { content: [{ type: "text", text: untrusted(`$ ${command}\n\n${clip(execErrorText(error), 30_000)}`) }] };
       }
     }
 
     // ── list_directory ────────────────────────────────────────────────────────
     if (toolName === "list_directory") {
+      const root = resolveRoot(args);
       const inputPath = String(args.path ?? ".").trim() || ".";
-      const dir = inputPath === "." ? session.root : safePath(inputPath);
+      const dir = inputPath === "." ? root : safePath(root, inputPath);
 
       const entries = await readdir(dir, { withFileTypes: true });
       const lines = entries
@@ -297,11 +312,12 @@ export function createServer(session: Session): Server {
 
     // ── find_files ────────────────────────────────────────────────────────────
     if (toolName === "find_files") {
+      const root = resolveRoot(args);
       const pattern = String(args.pattern ?? "").trim();
       if (!pattern) throw new Error("pattern is required.");
       const limit = clamp(args.limit, 200, 1000, 1);
 
-      const files = await cachedGlob(session.root, [pattern, ...EXCLUDES], {
+      const files = await cachedGlob(root, [pattern, ...EXCLUDES], {
         onlyFiles: true,
         dot: false,
       });
@@ -317,6 +333,7 @@ export function createServer(session: Session): Server {
 
     // ── grep ──────────────────────────────────────────────────────────────────
     if (toolName === "grep") {
+      const root = resolveRoot(args);
       const pattern = String(args.pattern ?? "");
       if (!pattern) throw new Error("pattern is required.");
       const ignoreCase = args.ignoreCase !== false;
@@ -324,7 +341,7 @@ export function createServer(session: Session): Server {
       const globArg = String(args.glob ?? "").trim();
       const patterns = globArg
         ? [globArg]
-        : ["**/*.{ts,tsx,js,jsx,mjs,cjs,json,yml,yaml,sql,prisma,css,scss,html,md,mdx}"];
+        : [`**/*.{${CODE_EXTS},json,yml,yaml,toml,sql,prisma,css,scss,html,md,mdx}`];
 
       let re: RegExp;
       try {
@@ -334,7 +351,7 @@ export function createServer(session: Session): Server {
       }
 
       // ripgrep fast path — native scan, no per-file JS read.
-      const rg = await rgGrep(session.root, { pattern, ignoreCase, includeGlobs: patterns, maxResults });
+      const rg = await rgGrep(root, { pattern, ignoreCase, includeGlobs: patterns, maxResults });
       if (rg !== null) {
         const text = rg.length
           ? untrusted(rg.map((m) => `${m.rel}:${m.line}: ${m.text.trim().slice(0, 200)}`).join("\n"))
@@ -343,14 +360,14 @@ export function createServer(session: Session): Server {
       }
 
       // JS fallback when rg is unavailable (or rejected the pattern).
-      const files = await cachedGlob(session.root, [...patterns, ...EXCLUDES], {
+      const files = await cachedGlob(root, [...patterns, ...EXCLUDES], {
         absolute: true,
         onlyFiles: true,
       });
 
       const results: string[] = [];
       for (const file of files) {
-        const rel = path.relative(session.root, file);
+        const rel = path.relative(root, file);
         if (rel.startsWith("..") || path.isAbsolute(rel)) continue;
 
         const raw = await readFile(file, "utf8");
@@ -381,8 +398,9 @@ export function createServer(session: Session): Server {
 
     // ── get_package_summary ───────────────────────────────────────────────────
     if (toolName === "get_package_summary") {
-      const { dir, label } = resolveModuleDir(args.module);
-      const pkg = await readPackageJson(dir);
+      const root = resolveRoot(args);
+      const { dir, label } = resolveModuleDir(root, args.module);
+      const pkg = await readPackageJson(root, dir);
 
       return {
         content: [
@@ -396,9 +414,7 @@ export function createServer(session: Session): Server {
                 scripts: pkg.scripts ?? {},
                 dependencies: Object.keys(pkg.dependencies ?? {}),
                 devDependencies: Object.keys(pkg.devDependencies ?? {}),
-              },
-              null,
-              2
+              }
             ),
           },
         ],
@@ -407,22 +423,31 @@ export function createServer(session: Session): Server {
 
     // ── read_file_range ───────────────────────────────────────────────────────
     if (toolName === "read_file_range") {
+      const root = resolveRoot(args);
       const inputPath = String(args.path ?? "");
-      const startLine = Math.max(1, Number(args.startLine ?? 1));
-      const endLine = Math.min(Number(args.endLine ?? 150), startLine + 300);
+      const startLine = Math.max(1, Math.floor(Number(args.startLine ?? 1)) || 1);
+      // Default window is 150 lines from startLine (not a fixed line 150, which
+      // returned nothing for any startLine past 150). Hard cap: 300 lines.
+      const requestedEnd = Math.floor(Number(args.endLine ?? startLine + 149)) || startLine + 149;
+      const endLine = Math.min(Math.max(requestedEnd, startLine), startLine + 299);
 
-      const filePath = safePath(inputPath);
+      const filePath = safePath(root, inputPath);
       const raw = await readFile(filePath, "utf8");
       if (raw.length > 500_000) throw new Error("File too large.");
 
       const lines = raw.split(/\r?\n/);
+      if (startLine > lines.length) {
+        return { content: [{ type: "text", text: `File: ${inputPath} has only ${lines.length} lines (requested from ${startLine}).` }] };
+      }
       const selected = lines.slice(startLine - 1, endLine).join("\n");
+      const shownEnd = Math.min(endLine, lines.length);
+      const more = shownEnd < lines.length ? `\n... (${lines.length - shownEnd} more lines)` : "";
 
       return {
         content: [
           {
             type: "text",
-            text: untrusted(`File: ${inputPath}\nLines: ${startLine}-${Math.min(endLine, lines.length)}\n\n${selected}`),
+            text: untrusted(`File: ${inputPath}\nLines: ${startLine}-${shownEnd} of ${lines.length}\n\n${selected}${more}`),
           },
         ],
       };
@@ -430,6 +455,7 @@ export function createServer(session: Session): Server {
 
     // ── read_multiple_files ───────────────────────────────────────────────────
     if (toolName === "read_multiple_files") {
+      const root = resolveRoot(args);
       const paths = (args.paths as string[]) ?? [];
       const maxLinesEach = clamp(args.maxLinesEach, 150, 300, 1);
 
@@ -439,7 +465,7 @@ export function createServer(session: Session): Server {
       const parts: string[] = [];
 
       for (const inputPath of paths) {
-        const filePath = safePath(inputPath);
+        const filePath = safePath(root, inputPath);
         const exists = await fileExists(filePath);
 
         if (!exists) {
@@ -467,13 +493,10 @@ export function createServer(session: Session): Server {
 
     // ── search_code ───────────────────────────────────────────────────────────
     if (toolName === "search_code") {
-      const text = await searchFiles({
+      const root = resolveRoot(args);
+      const text = await searchFiles(root, {
         query: String(args.query ?? ""),
-        patterns: [
-          "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx",
-          "**/*.mjs", "**/*.cjs", "**/*.json", "**/*.yml",
-          "**/*.yaml", "**/*.prisma", "**/*.sql",
-        ],
+        patterns: [`**/*.{${CODE_EXTS},json,yml,yaml,toml,prisma,sql}`],
         maxResults: 10,
         contextLines: 4,
         emptyMessage: `No code matches found for "${String(args.query ?? "")}".`,
@@ -483,7 +506,8 @@ export function createServer(session: Session): Server {
 
     // ── search_docs ───────────────────────────────────────────────────────────
     if (toolName === "search_docs") {
-      const text = await searchFiles({
+      const root = resolveRoot(args);
+      const text = await searchFiles(root, {
         query: String(args.query ?? ""),
         patterns: ["docs/**/*.md", "**/*.md", "**/*.mdx", "README*"],
         maxResults: 8,
@@ -495,6 +519,7 @@ export function createServer(session: Session): Server {
 
     // ── read_doc ──────────────────────────────────────────────────────────────
     if (toolName === "read_doc") {
+      const root = resolveRoot(args);
       const inputPath = String(args.path ?? "");
       const maxLines = clamp(args.maxLines, 120, 300, 1);
 
@@ -502,7 +527,7 @@ export function createServer(session: Session): Server {
         throw new Error("read_doc supports .md, .mdx, and .txt files only.");
       }
 
-      const filePath = safePath(inputPath);
+      const filePath = safePath(root, inputPath);
       const raw = await readFile(filePath, "utf8");
       if (raw.length > 500_000) throw new Error("File too large.");
 
@@ -521,7 +546,8 @@ export function createServer(session: Session): Server {
 
     // ── find_api_endpoint ─────────────────────────────────────────────────────
     if (toolName === "find_api_endpoint") {
-      const text = await searchFiles({
+      const root = resolveRoot(args);
+      const text = await searchFiles(root, {
         query: String(args.query ?? ""),
         patterns: [
           "**/routes/**/*.ts", "**/routes/**/*.tsx",
@@ -537,7 +563,8 @@ export function createServer(session: Session): Server {
 
     // ── find_schema ───────────────────────────────────────────────────────────
     if (toolName === "find_schema") {
-      const text = await searchFiles({
+      const root = resolveRoot(args);
+      const text = await searchFiles(root, {
         query: String(args.query ?? ""),
         patterns: [
           "**/schema.ts", "**/schemas.ts", "**/types/**/*.ts",
@@ -552,10 +579,11 @@ export function createServer(session: Session): Server {
 
     // ── find_references ───────────────────────────────────────────────────────
     if (toolName === "find_references") {
+      const root = resolveRoot(args);
       const symbol = String(args.symbol ?? "");
-      const text = await searchFiles({
+      const text = await searchFiles(root, {
         query: symbol,
-        patterns: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+        patterns: [`**/*.{${CODE_EXTS}}`],
         maxResults: 15,
         contextLines: 3,
         matchAll: true,
@@ -566,8 +594,9 @@ export function createServer(session: Session): Server {
 
     // ── find_exports ──────────────────────────────────────────────────────────
     if (toolName === "find_exports") {
+      const root = resolveRoot(args);
       const name = String(args.name ?? "");
-      const text = await searchFiles({
+      const text = await searchFiles(root, {
         query: `export.*${name}`,
         regex: true,
         patterns: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
@@ -580,16 +609,17 @@ export function createServer(session: Session): Server {
 
     // ── get_audit_summaries ───────────────────────────────────────────────────
     if (toolName === "get_audit_summaries") {
+      const root = resolveRoot(args);
       const moduleFilter = String(args.module ?? "").toLowerCase();
       const maxLinesEach = clamp(args.maxLinesEach, 120, 300, 1);
 
-      const auditDir = path.join(session.root, ".claude", "audits");
+      const auditDir = path.join(root, ".claude", "audits");
       if (!(await fileExists(auditDir))) {
         return { content: [{ type: "text", text: "No .claude/audits/ directory found in this repo." }] };
       }
 
       const files = await fg([".claude/audits/**/*.md"], {
-        cwd: session.root,
+        cwd: root,
         absolute: true,
         onlyFiles: true,
       });
@@ -611,7 +641,7 @@ export function createServer(session: Session): Server {
 
       const parts: string[] = [];
       for (const file of filtered.sort()) {
-        const relativePath = path.relative(session.root, file);
+        const relativePath = path.relative(root, file);
         const raw = await readFile(file, "utf8");
         const lines = raw.split(/\r?\n/);
         const limited = lines.slice(0, maxLinesEach).join("\n");
@@ -628,7 +658,8 @@ export function createServer(session: Session): Server {
 
     // ── search_audits ─────────────────────────────────────────────────────────
     if (toolName === "search_audits") {
-      const text = await searchFiles({
+      const root = resolveRoot(args);
+      const text = await searchFiles(root, {
         query: String(args.query ?? ""),
         patterns: [".claude/audits/**/*.md"],
         maxResults: 10,
@@ -639,8 +670,277 @@ export function createServer(session: Session): Server {
       return { content: [{ type: "text", text }] };
     }
 
+    // ── get_architecture_docs ───────────────────────────────────────────────
+    if (toolName === "get_architecture_docs") {
+      const root = resolveRoot(args);
+      const CURATED_DIRS = [".claude/docs", "docs/architecture", "docs/adr"];
+      const DOC_GLOBS = CURATED_DIRS.map((d) => `${d}/**/*.md`);
+
+      // Classify by path
+      const classifyType = (relPath: string): string => {
+        if (relPath.startsWith("docs/adr")) return "adr";
+        if (relPath.startsWith("docs/architecture")) return "architecture";
+        return "guide";
+      };
+
+      // Extract title from first heading or filename
+      const extractTitle = (content: string, relPath: string): string => {
+        const headingMatch = content.match(/^#\s+(.+)/m);
+        if (headingMatch?.[1]) return headingMatch[1].trim();
+        return path.basename(relPath, ".md").replace(/[-_]/g, " ");
+      };
+
+      // Extract summary: first non-heading, non-empty paragraph (up to 200 chars)
+      const extractSummary = (content: string): string => {
+        const lines = content.split(/\r?\n/);
+        const paras: string[] = [];
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("---")) continue;
+          paras.push(trimmed);
+          if (paras.join(" ").length >= 200) break;
+        }
+        const summary = paras.join(" ");
+        return summary.length > 200 ? summary.slice(0, 200) + "..." : summary;
+      };
+
+      // Extract key rules: lines starting with - or * that contain "must", "never", "always", "do not", "required"
+      const RULE_PATTERN = /\b(must|never|always|do not|don't|required|shall not|forbidden|prohibited)\b/i;
+      const extractKeyRules = (content: string): string[] => {
+        const rules: string[] = [];
+        for (const line of content.split(/\r?\n/)) {
+          const trimmed = line.trim();
+          if ((trimmed.startsWith("- ") || trimmed.startsWith("* ")) && RULE_PATTERN.test(trimmed)) {
+            rules.push(trimmed.slice(2).trim());
+            if (rules.length >= 5) break;
+          }
+        }
+        return rules;
+      };
+
+      // Single-doc mode: return full content (capped)
+      const requestedPath = args.path ? String(args.path) : null;
+      if (requestedPath) {
+        const safe = safePathIn(root, requestedPath);
+        if (!safe) {
+          return { content: [{ type: "text", text: `Path "${requestedPath}" is outside the repo root.` }], isError: true };
+        }
+        const inCurated = CURATED_DIRS.some((d) => requestedPath.startsWith(d));
+        if (!inCurated) {
+          return {
+            content: [{ type: "text", text: `Path "${requestedPath}" is not in a curated docs directory (${CURATED_DIRS.join(", ")}).` }],
+            isError: true,
+          };
+        }
+        if (!(await fileExists(safe))) {
+          return { content: [{ type: "text", text: `Document not found: ${requestedPath}` }], isError: true };
+        }
+        const raw = await readFile(safe, "utf8");
+        const title = extractTitle(raw, requestedPath);
+        const docType = classifyType(requestedPath);
+        const keyRules = extractKeyRules(raw);
+        const capped = raw.length > 16_000 ? raw.slice(0, 16_000) + "\n... (truncated to ~4,000 tokens)" : raw;
+        const result = { title, path: requestedPath, type: docType, keyRules, content: capped };
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      }
+
+      // Index mode: list all curated docs with summaries
+      const allFiles = await fg(DOC_GLOBS, { cwd: root, absolute: true, onlyFiles: true });
+
+      if (allFiles.length === 0) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              source: "curated-docs",
+              documents: [],
+              note: `No architecture docs found in curated paths: ${CURATED_DIRS.join(", ")}`,
+            }),
+          }],
+        };
+      }
+
+      const documents: { title: string; path: string; type: string; summary: string; keyRules: string[] }[] = [];
+      let totalSize = 0;
+      for (const absPath of allFiles.sort()) {
+        if (totalSize > 14_000) break;
+        const relPath = path.relative(root, absPath).replace(/\\/g, "/");
+        const raw = await readFile(absPath, "utf8");
+        const title = extractTitle(raw, relPath);
+        const docType = classifyType(relPath);
+        const summary = extractSummary(raw);
+        const keyRules = extractKeyRules(raw);
+        const entry = { title, path: relPath, type: docType, summary, keyRules };
+        const entryJson = JSON.stringify(entry);
+        totalSize += entryJson.length;
+        documents.push(entry);
+      }
+
+      const result = { source: "curated-docs", documents };
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+
+    // ── get_project_manifest ──────────────────────────────────────────────────
+    if (toolName === "get_project_manifest") {
+      const root = resolveRoot(args);
+      // 1. Try explicit manifest files
+      const manifestCandidates = [
+        path.join(root, ".claude", "manifest.json"),
+        path.join(root, ".claude", "project.json"),
+      ];
+
+      const SECRET_KEYS = /secret|password|token|credential|api.?key|database.?url|connection.?string|smtp.?pass|private.?key|jwt|session.?secret|auth.?secret/i;
+      const redact = (obj: unknown): unknown =>
+        JSON.parse(JSON.stringify(obj, (k, v) => {
+          if (SECRET_KEYS.test(k) && typeof v === "string") return "[REDACTED]";
+          return v;
+        }));
+      const cap = (json: string): string =>
+        json.length > 16_000 ? json.slice(0, 16_000) + "\n... (truncated to ~4,000 tokens)" : json;
+
+      for (const candidate of manifestCandidates) {
+        if (await fileExists(candidate)) {
+          try {
+            const raw = await readFile(candidate, "utf8");
+            const parsed = JSON.parse(raw);
+            if (!parsed.source) parsed.source = "manifest";
+            const output = cap(JSON.stringify(redact(parsed)));
+            return { content: [{ type: "text", text: output }] };
+          } catch {
+            // Malformed JSON - fall through to auto-detection
+          }
+        }
+      }
+
+      // 2. Auto-detect from package.json + directory structure
+      const manifest: Record<string, unknown> = { source: "auto-detected" };
+
+      // Package.json
+      const pkgPath = path.join(root, "package.json");
+      if (await fileExists(pkgPath)) {
+        try {
+          const pkg = JSON.parse(await readFile(pkgPath, "utf8"));
+          manifest.name = pkg.name || path.basename(root);
+          manifest.version = pkg.version;
+          manifest.description = pkg.description;
+
+          // Stack detection from dependencies
+          const allDeps = {
+            ...pkg.dependencies,
+            ...pkg.devDependencies,
+          };
+          const stack: string[] = [];
+          if (allDeps.react || allDeps["react-dom"]) stack.push("React");
+          if (allDeps.next) stack.push("Next.js");
+          if (allDeps.vue) stack.push("Vue");
+          if (allDeps.svelte) stack.push("Svelte");
+          if (allDeps.express) stack.push("Express");
+          if (allDeps.fastify) stack.push("Fastify");
+          if (allDeps.hono) stack.push("Hono");
+          if (allDeps["@nestjs/core"]) stack.push("NestJS");
+          if (allDeps.prisma || allDeps["@prisma/client"]) stack.push("Prisma");
+          if (allDeps.drizzle || allDeps["drizzle-orm"]) stack.push("Drizzle");
+          if (allDeps.knex) stack.push("Knex");
+          if (allDeps.tailwindcss) stack.push("Tailwind");
+          if (allDeps.typescript || allDeps.tsx) stack.push("TypeScript");
+          if (allDeps["expo"] || allDeps["react-native"]) stack.push("React Native");
+          if (allDeps.bullmq) stack.push("BullMQ");
+          if (allDeps.ioredis || allDeps.redis) stack.push("Redis");
+          if (allDeps.docker || existsSync(path.join(root, "docker-compose.yml"))
+              || existsSync(path.join(root, "docker-compose.yaml"))
+              || existsSync(path.join(root, "Dockerfile")))
+            stack.push("Docker");
+
+          if (stack.length > 0) manifest.stack = stack;
+
+          // Scripts
+          if (pkg.scripts && Object.keys(pkg.scripts).length > 0) {
+            manifest.scripts = Object.keys(pkg.scripts);
+          }
+        } catch {
+          manifest.name = path.basename(root);
+        }
+      } else {
+        manifest.name = path.basename(root);
+      }
+
+      // Key directories
+      const DIR_LABELS: Record<string, string> = {
+        src: "Frontend application source",
+        lib: "Shared library code",
+        app: "Application entry point",
+        apps: "Monorepo application packages",
+        packages: "Monorepo shared packages",
+        server: "Backend server code",
+        client: "Client-side code",
+        api: "API layer",
+        web: "Web application",
+        mobile: "Mobile application",
+        shared: "Shared cross-platform code",
+        common: "Common utilities",
+        services: "Service layer",
+        components: "UI components",
+        pages: "Page-level components or routes",
+        routes: "Route definitions",
+        middleware: "Middleware handlers",
+        models: "Data models",
+        schemas: "Schema definitions",
+        migrations: "Database migrations",
+        tests: "Test suites",
+        test: "Test suites",
+        __tests__: "Test suites",
+        e2e: "End-to-end tests",
+        scripts: "Build and utility scripts",
+        config: "Configuration files",
+        deploy: "Deployment configuration",
+        ".claude": "Project context and audits",
+      };
+      const keyDirs: { path: string; description: string }[] = [];
+      for (const [d, desc] of Object.entries(DIR_LABELS)) {
+        if (existsSync(path.join(root, d))) keyDirs.push({ path: d, description: desc });
+      }
+      if (keyDirs.length > 0) manifest.directories = keyDirs;
+
+      // Monorepo detection
+      const packagesDir = path.join(root, "packages");
+      const appsDir = path.join(root, "apps");
+      const modules: string[] = [];
+      for (const dir of [packagesDir, appsDir]) {
+        if (existsSync(dir)) {
+          try {
+            const entries = await readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              if (entry.isDirectory() && !entry.name.startsWith(".")) {
+                modules.push(path.relative(root, path.join(dir, entry.name)));
+              }
+            }
+          } catch { /* skip */ }
+        }
+      }
+      if (modules.length > 0) manifest.modules = modules;
+
+      // Config files present
+      const configFiles = [
+        "tsconfig.json", ".eslintrc.json", ".eslintrc.js", "eslint.config.js",
+        "prettier.config.js", ".prettierrc", "vite.config.ts", "next.config.js",
+        "next.config.ts", "tailwind.config.ts", "tailwind.config.js",
+        "docker-compose.yml", "docker-compose.yaml", "Dockerfile",
+        ".env.example", "turbo.json", "nx.json", "pnpm-workspace.yaml",
+        "drizzle.config.ts", "prisma/schema.prisma",
+      ];
+      const detectedConfigs: string[] = [];
+      for (const f of configFiles) {
+        if (existsSync(path.join(root, f))) detectedConfigs.push(f);
+      }
+      if (detectedConfigs.length > 0) manifest.configFiles = detectedConfigs;
+
+      const output = cap(JSON.stringify(manifest));
+      return { content: [{ type: "text", text: output }] };
+    }
+
     // ── get_project_context ───────────────────────────────────────────────────
     if (toolName === "get_project_context") {
+      const root = resolveRoot(args);
       const maxLinesEach = clamp(args.maxLinesEach, 60, 200, 1);
 
       const candidates = [
@@ -656,7 +956,7 @@ export function createServer(session: Session): Server {
       const parts: string[] = [];
 
       for (const candidate of candidates) {
-        const filePath = path.join(session.root, candidate);
+        const filePath = path.join(root, candidate);
         if (await fileExists(filePath)) {
           const raw = await readFile(filePath, "utf8");
           const lines = raw.split(/\r?\n/);
@@ -666,15 +966,15 @@ export function createServer(session: Session): Server {
         }
       }
 
-      const notesDir = path.join(session.root, ".claude", "notes");
+      const notesDir = path.join(root, ".claude", "notes");
       if (await fileExists(notesDir)) {
         const noteFiles = await fg([".claude/notes/**/*.md", ".claude/notes/**/*.txt"], {
-          cwd: session.root,
+          cwd: root,
           absolute: true,
           onlyFiles: true,
         });
         for (const file of noteFiles.slice(0, 5)) {
-          const relativePath = path.relative(session.root, file);
+          const relativePath = path.relative(root, file);
           const raw = await readFile(file, "utf8");
           const lines = raw.split(/\r?\n/);
           const limited = lines.slice(0, maxLinesEach).join("\n");
@@ -695,12 +995,13 @@ export function createServer(session: Session): Server {
 
     // ── get_git_status ────────────────────────────────────────────────────────
     if (toolName === "get_git_status") {
+      const root = resolveRoot(args);
       const commits = clamp(args.commits, 10, 30, 1);
       const includeDiff = Boolean(args.includeDiff ?? false);
 
-      const statusOut = await runCommand("git status --short");
-      const logOut = await runCommand(`git log --oneline --decorate -n ${commits}`);
-      const branchOut = await runCommand("git branch --show-current");
+      const statusOut = await runCommand("git status --short", root);
+      const logOut = await runCommand(`git log --oneline --decorate -n ${commits}`, root);
+      const branchOut = await runCommand("git branch --show-current", root);
 
       const parts = [
         `Branch: ${branchOut.trim()}`,
@@ -709,7 +1010,7 @@ export function createServer(session: Session): Server {
       ];
 
       if (includeDiff) {
-        const diffOut = await runCommand("git diff --staged");
+        const diffOut = await runCommand("git diff --staged", root);
         if (diffOut) parts.push(`\nStaged diff:\n${diffOut.slice(0, 5_000)}`);
       }
 
@@ -718,10 +1019,11 @@ export function createServer(session: Session): Server {
 
     // ── get_recent_changes ────────────────────────────────────────────────────
     if (toolName === "get_recent_changes") {
+      const root = resolveRoot(args);
       const commits = clamp(args.commits, 3, 10, 1);
 
-      const output = await runCommand(`git log --oneline -n ${commits} --name-only`);
-      const diffOutput = await runCommand(`git diff HEAD~${commits} HEAD --stat`);
+      const output = await runCommand(`git log --oneline -n ${commits} --name-only`, root);
+      const diffOutput = await runCommand(`git diff HEAD~${commits} HEAD --stat`, root);
 
       return {
         content: [
@@ -735,11 +1037,12 @@ export function createServer(session: Session): Server {
 
     // ── get_env_vars ──────────────────────────────────────────────────────────
     if (toolName === "get_env_vars") {
+      const root = resolveRoot(args);
       const envFiles = [".env", ".env.example", ".env.local", ".env.development", ".env.production"];
       const parts: string[] = [];
 
       for (const envFile of envFiles) {
-        const filePath = path.join(session.root, envFile);
+        const filePath = path.join(root, envFile);
         if (!(await fileExists(filePath))) continue;
 
         const raw = await readFile(filePath, "utf8");
@@ -767,8 +1070,9 @@ export function createServer(session: Session): Server {
 
     // ── get_typecheck_errors ──────────────────────────────────────────────────
     if (toolName === "get_typecheck_errors") {
-      const { dir, label } = resolveModuleDir(args.module);
-      const pkg = await readPackageJson(dir);
+      const root = resolveRoot(args);
+      const { dir, label } = resolveModuleDir(root, args.module);
+      const pkg = await readPackageJson(root, dir);
       const scripts = pkg.scripts ?? {};
 
       const command = scripts.typecheck
@@ -783,29 +1087,39 @@ export function createServer(session: Session): Server {
 
     // ── get_test_failures ─────────────────────────────────────────────────────
     if (toolName === "get_test_failures") {
-      const { dir, label } = resolveModuleDir(args.module);
-      await readPackageJson(dir);
+      const root = resolveRoot(args);
+      const { dir, label } = resolveModuleDir(root, args.module);
+      await readPackageJson(root, dir);
       const output = await runCommand("npm test", dir);
       return { content: [{ type: "text", text: `Module: ${label}\nCommand: npm test\n\n${output}` }] };
     }
 
     // ── find_todos ────────────────────────────────────────────────────────────
     if (toolName === "find_todos") {
-      const patterns = ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.md", "**/*.mdx"];
+      const root = resolveRoot(args);
+      const patterns = [`**/*.{${CODE_EXTS},md,mdx}`];
       const allResults: string[] = [];
 
-      for (const keyword of ["todo", "fixme", "hack", "note:"]) {
-        const text = await searchFiles({
-          query: keyword,
+      // Word-boundary, comment-marker style matches only, so prose like
+      // "photodocument" or "a note: about" in docs does not flood the output.
+      const markers: [string, string][] = [
+        ["TODO", "\\bTODO\\b"],
+        ["FIXME", "\\bFIXME\\b"],
+        ["HACK", "\\bHACK\\b"],
+        ["NOTE", "\\bNOTE:"],
+      ];
+      for (const [label, query] of markers) {
+        const text = await searchFiles(root, {
+          query,
+          regex: true,
           patterns,
           maxResults: 10,
-          contextLines: 2,
+          contextLines: 1,
           matchAll: true,
+          raw: true,
           emptyMessage: "",
         });
-        if (text && !text.includes("No ")) {
-          allResults.push(`## ${keyword.toUpperCase()}\n\n${text}`);
-        }
+        if (text) allResults.push(`## ${label}\n\n${text}`);
       }
 
       return {
@@ -822,10 +1136,11 @@ export function createServer(session: Session): Server {
 
     // ── run_script ────────────────────────────────────────────────────────────
     if (toolName === "run_script") {
+      const root = resolveRoot(args);
       const scriptName = String(args.script ?? "");
-      const { dir, label } = resolveModuleDir(args.module);
+      const { dir, label } = resolveModuleDir(root, args.module);
 
-      const pkg = await readPackageJson(dir);
+      const pkg = await readPackageJson(root, dir);
       const scripts = pkg.scripts ?? {};
 
       if (!scripts[scriptName]) {
@@ -846,11 +1161,12 @@ export function createServer(session: Session): Server {
 
     // ── write_file ────────────────────────────────────────────────────────────
     if (toolName === "write_file") {
+      const root = resolveRoot(args);
       const inputPath = String(args.path ?? "");
       const content = String(args.content ?? "");
       if (!inputPath) throw new Error("path is required.");
 
-      const filePath = safePath(inputPath);
+      const filePath = safePath(root, inputPath);
       await mkdir(path.dirname(filePath), { recursive: true });
       await writeFile(filePath, content, "utf8");
       invalidateGlobCache();
@@ -861,6 +1177,7 @@ export function createServer(session: Session): Server {
 
     // ── edit_file ─────────────────────────────────────────────────────────────
     if (toolName === "edit_file") {
+      const root = resolveRoot(args);
       const inputPath = String(args.path ?? "");
       const oldStr = String(args.oldStr ?? "");
       const newStr = String(args.newStr ?? "");
@@ -868,7 +1185,7 @@ export function createServer(session: Session): Server {
       if (!inputPath) throw new Error("path is required.");
       if (!oldStr) throw new Error("oldStr is required.");
 
-      const filePath = safePath(inputPath);
+      const filePath = safePath(root, inputPath);
       const raw = await readFile(filePath, "utf8");
       const occurrences = raw.split(oldStr).length - 1;
 
@@ -910,6 +1227,7 @@ export function createServer(session: Session): Server {
 
     // ── delete_file ───────────────────────────────────────────────────────────
     if (toolName === "delete_file") {
+      const root = resolveRoot(args);
       const inputPath = String(args.path ?? "");
       const confirm = Boolean(args.confirm);
       if (!inputPath) throw new Error("path is required.");
@@ -918,7 +1236,7 @@ export function createServer(session: Session): Server {
         return { content: [{ type: "text", text: `Deletion refused: confirm must be true to delete ${inputPath}.` }] };
       }
 
-      const filePath = safePath(inputPath);
+      const filePath = safePath(root, inputPath);
       if (!(await fileExists(filePath))) {
         return { content: [{ type: "text", text: `File not found: ${inputPath}` }] };
       }

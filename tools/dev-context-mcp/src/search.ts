@@ -166,7 +166,7 @@ export async function cachedGlob(
   const hit = cache.get(key);
   if (hit && hit.expires > now) return hit.files;
 
-  const files = await fg(patterns, { cwd: root, ...options });
+  const files = await fg(patterns, { cwd: root, suppressErrors: true, ...options });
   cache.set(key, { files, expires: now + TTL_MS });
   return files;
 }

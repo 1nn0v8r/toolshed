@@ -49,6 +49,8 @@ export const TOOL_CAPS: Record<string, Capability> = {
   get_audit_summaries: "read",
   search_audits: "read",
   get_project_context: "read",
+  get_project_manifest: "read",
+  get_architecture_docs: "read",
   get_git_status: "read",
   get_recent_changes: "read",
   get_env_vars: "read",

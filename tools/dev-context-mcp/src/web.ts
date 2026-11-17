@@ -15,7 +15,7 @@ import path from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
 import type { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { untrusted, safePathIn } from "./util.js";
-import type { Session } from "./security.js";
+import { confineRoot, type Session } from "./security.js";
 
 type ToolResult = CallToolResult;
 
@@ -325,7 +325,9 @@ async function screenshot(args: Record<string, unknown>, session: Session): Prom
     const buf: Buffer = await page.screenshot({ fullPage });
 
     if (outPath) {
-      const dest = safePathIn(session.root, outPath);
+      const override = String(args.repoRoot ?? "").trim();
+      const root = override ? confineRoot(session, path.resolve(override)) : session.root;
+      const dest = safePathIn(root, outPath);
       await mkdir(path.dirname(dest), { recursive: true });
       await writeFile(dest, buf);
       return { content: [{ type: "text", text: `Screenshot of ${url} saved to ${outPath} (${buf.length} bytes).` }] };
