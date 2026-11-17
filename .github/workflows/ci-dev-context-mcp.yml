@@ -1,0 +1,49 @@
+name: dev-context-mcp
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/dev-context-mcp/**"
+      - ".github/workflows/ci-dev-context-mcp.yml"
+  pull_request:
+    paths:
+      - "tools/dev-context-mcp/**"
+      - ".github/workflows/ci-dev-context-mcp.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [20, 22]
+    defaults:
+      run:
+        working-directory: tools/dev-context-mcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: tools/dev-context-mcp/package-lock.json
+
+      - name: Install (also builds dist/)
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Smoke test
+        run: npm test
