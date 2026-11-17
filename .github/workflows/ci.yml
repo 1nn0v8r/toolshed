@@ -1,14 +1,14 @@
 # One CI workflow for every tool. It runs on every push and pull request (so the
 # "ci" status always reports), but only tests the tools whose folders changed.
 #
-# Runners: set the repository variable TEST_RUNNERS to a JSON array of runner
-# labels, one per machine or OS, for example ["self-hosted-linux","self-hosted-windows"].
-# Give each of your machines that label in its runner settings. Without the
-# variable, the three GitHub-hosted systems are used.
+# Runners:
+#   Linux tests run on the self-hosted runner labelled "toolshed".
+#   Windows and macOS tests run on GitHub-hosted runners.
+#   Database integration tests run on GitHub-hosted Ubuntu (they need service containers).
 #
-# Security: self-hosted machines run whatever code a workflow runs. The test jobs
-# therefore skip pull requests from forks. Only pushes and pull requests from
-# branches in this repository reach your machines.
+# Security: self-hosted jobs run whatever code a workflow runs, so they skip pull
+# requests from forks. Only pushes and pull requests from branches in this
+# repository reach the self-hosted runner.
 
 name: ci
 
@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           all=$(ls -d tools/*/ | xargs -n1 basename | sort)
-          # Run everything for manual runs, and when shared CI or the repo config changes.
+          # Run everything for manual runs, and when shared CI changes.
           if [ "$EVENT" = "workflow_dispatch" ]; then
             changed="$all"
           else
@@ -61,18 +61,47 @@ jobs:
           echo "tools=$json" >> "$GITHUB_OUTPUT"
           echo "Testing: $json"
 
-  test:
-    name: ${{ matrix.tool }} / ${{ matrix.os }} / Node ${{ matrix.node }}
+  test-linux:
+    name: ${{ matrix.tool }} / self-hosted Linux / Node ${{ matrix.node }}
     needs: changes
     if: >-
       needs.changes.outputs.tools != '[]' &&
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: [self-hosted, linux, toolshed]
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.changes.outputs.tools) }}
+        node: ["20", "22"]
+    defaults:
+      run:
+        working-directory: tools/${{ matrix.tool }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  test-hosted:
+    name: ${{ matrix.tool }} / ${{ matrix.os }} / Node ${{ matrix.node }}
+    needs: changes
+    if: needs.changes.outputs.tools != '[]'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         tool: ${{ fromJSON(needs.changes.outputs.tools) }}
-        os: ${{ fromJSON(vars.TEST_RUNNERS || '["ubuntu-latest","windows-latest","macos-latest"]') }}
+        os: [windows-latest, macos-latest]
         node: ["20", "22"]
     defaults:
       run:
@@ -142,19 +171,20 @@ jobs:
   # or when every test job succeeded, and fails otherwise.
   ci:
     name: ci
-    needs: [changes, test, integration]
+    needs: [changes, test-linux, test-hosted, integration]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Summarize
         env:
-          RESULT_TEST: ${{ needs.test.result }}
-          RESULT_INT: ${{ needs.integration.result }}
+          R_LINUX: ${{ needs.test-linux.result }}
+          R_HOSTED: ${{ needs.test-hosted.result }}
+          R_INT: ${{ needs.integration.result }}
           TOOLS: ${{ needs.changes.outputs.tools }}
         run: |
           echo "tools: $TOOLS"
-          echo "test: $RESULT_TEST, integration: $RESULT_INT"
+          echo "linux: $R_LINUX, hosted: $R_HOSTED, integration: $R_INT"
           if [ "$TOOLS" = "[]" ]; then exit 0; fi
-          for r in "$RESULT_TEST" "$RESULT_INT"; do
+          for r in "$R_LINUX" "$R_HOSTED" "$R_INT"; do
             if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then exit 1; fi
           done
