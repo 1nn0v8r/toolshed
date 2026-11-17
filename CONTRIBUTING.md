@@ -10,7 +10,7 @@ Thanks for helping improve toolshed. This guide covers how to report issues, mak
 
 ## Making a change
 
-1. Fork the repo and create a branch from `main`, named after the change: `fix/dev-context-mcp-shell`, `feat/new-tool-name`, `docs/install-guide`.
+1. Fork the repo and create a branch from `main`, named after the change: `fix/dev-context-mcp-shell`, `feat/new-tool-name`, `docs/install-guide`. Install the repo's pre-commit hook once, so secrets, personal paths and typography characters are caught before they are committed: `node tools/commit-guard/src/cli.js install`.
 2. Work inside the tool's folder and follow its README's **Development** section.
 3. Run the tool's typecheck and tests before you push.
 4. Update the tool's `CHANGELOG.md` under an **Unreleased** heading.
