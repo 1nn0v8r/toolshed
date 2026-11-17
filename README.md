@@ -14,10 +14,6 @@ Each tool lives in its own folder under [`tools/`](tools), with its own install 
 
 ## Tools
 
-<p align="center">
-  <img src="docs/images/tools-overview.svg" alt="The ten tools grouped as MCP servers, CLIs, and hooks and automation" width="100%">
-</p>
-
 | Tool | What it does | Type | Platforms | Status |
 |---|---|---|---|---|
 | [changelog-gen](tools/changelog-gen) | Turns commit messages into Keep a Changelog entries, with per-tool tags and paths for monorepos. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
