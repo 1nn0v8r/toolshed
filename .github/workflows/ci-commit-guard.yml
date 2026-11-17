@@ -1,0 +1,28 @@
+name: commit-guard
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/commit-guard/**"
+      - ".github/workflows/ci-commit-guard.yml"
+      - ".github/workflows/node-tool.yml"
+  pull_request:
+    paths:
+      - "tools/commit-guard/**"
+      - ".github/workflows/ci-commit-guard.yml"
+      - ".github/workflows/node-tool.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/node-tool.yml
+    with:
+      tool: commit-guard
