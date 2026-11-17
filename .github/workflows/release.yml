@@ -1,0 +1,71 @@
+# Creates a GitHub release when a per-tool tag is pushed, e.g. repo-pack@0.1.0.
+# Checks that the tool exists, that package.json has the same version, and that
+# CHANGELOG.md has a "## <version>" section, whose body becomes the release notes.
+
+name: release
+
+on:
+  push:
+    tags:
+      - "*@*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Parse tag
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          tool="${TAG%@*}"
+          version="${TAG##*@}"
+          if [ ! -d "tools/$tool" ]; then
+            echo "::error::No folder tools/$tool for tag $TAG"
+            exit 1
+          fi
+          echo "tool=$tool" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check version and extract notes
+        env:
+          TOOL: ${{ steps.tag.outputs.tool }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          node - <<'EOF'
+          const fs = require("fs");
+          const { TOOL, VERSION } = process.env;
+          const dir = `tools/${TOOL}`;
+          const pkgPath = `${dir}/package.json`;
+          if (fs.existsSync(pkgPath)) {
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+            if (pkg.version !== VERSION) {
+              console.log(`::error::${pkgPath} has version ${pkg.version}, tag says ${VERSION}`);
+              process.exit(1);
+            }
+          }
+          const log = fs.readFileSync(`${dir}/CHANGELOG.md`, "utf8").replace(/\r\n/g, "\n");
+          const lines = log.split("\n");
+          const start = lines.findIndex((l) => l.startsWith(`## ${VERSION}`));
+          if (start === -1) {
+            console.log(`::error::${dir}/CHANGELOG.md has no "## ${VERSION}" section`);
+            process.exit(1);
+          }
+          let end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
+          if (end === -1) end = lines.length;
+          const notes = lines.slice(start + 1, end).join("\n").trim();
+          fs.writeFileSync("release-notes.md", notes + "\n");
+          EOF
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          TOOL: ${{ steps.tag.outputs.tool }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: gh release create "$TAG" --title "$TOOL $VERSION" --notes-file release-notes.md --verify-tag
