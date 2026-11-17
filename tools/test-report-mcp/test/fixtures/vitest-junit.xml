@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="6" failures="2" errors="1" time="1.234">
+    <testsuite name="test/math.test.ts" timestamp="2026-11-17T10:00:00.000Z" hostname="host" tests="4" failures="1" errors="0" skipped="1" time="0.012">
+        <testcase classname="test/math.test.ts" name="math &gt; adds numbers" time="0.001">
+        </testcase>
+        <testcase classname="test/math.test.ts" name="math &gt; handles caf&#233; and 日本語 &amp; emoji 🚀" time="0.002">
+            <failure message="expected &apos;caf&#233;&apos; to be &apos;cafe&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected 'café' to be 'cafe' // Object.is equality
+
+Expected: &quot;cafe&quot;
+Received: &quot;café&quot;
+
+ ❯ test/math.test.ts:14:22
+ ❯ /abs/path/to/project/node_modules/@vitest/runner/dist/index.js:135:14
+ ❯ /abs/path/to/project/node_modules/vitest/dist/chunks/runtime.js:50:5
+            </failure>
+        </testcase>
+        <testcase classname="test/math.test.ts" name="math &gt; later" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="test/math.test.ts" name="math &gt; nested &gt; deep ok" time="0.001">
+        </testcase>
+    </testsuite>
+    <testsuite name="test/api.test.ts" timestamp="2026-11-17T10:00:00.000Z" hostname="host" tests="2" failures="1" errors="1" skipped="0" time="0.5">
+        <testcase classname="test/api.test.ts" name="api &gt; returns 200 for &lt;health&gt;" time="0.4">
+            <failure message="expected 500 to be 200" type="AssertionError">
+AssertionError: expected 500 to be 200
+ ❯ /abs/path/to/project/test/api.test.ts:30:19
+            </failure>
+        </testcase>
+        <testcase classname="test/api.test.ts" name="api &gt; crashes" time="0.1">
+            <error message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading 'id')
+    at handler (/abs/path/to/project/src/api.ts:12:20)
+    at node:internal/process/task_queues:95:5
+    at run (/abs/path/to/project/node_modules/vitest/dist/index.js:1:1)
+            </error>
+        </testcase>
+    </testsuite>
+</testsuites>

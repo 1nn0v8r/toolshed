@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="1" skipped="1" tests="4" time="0.123" timestamp="2026-11-17T10:00:00" hostname="host"><testcase classname="tests.test_calc" name="test_add" file="tests/test_calc.py" line="3" time="0.001"/><testcase classname="tests.test_calc.TestDivide" name="test_by_zero" file="tests/test_calc.py" line="12" time="0.002"><failure message="assert 1 == 2&#10; +  where 1 = add(0, 1)">self = &lt;tests.test_calc.TestDivide object at 0x1&gt;
+
+    def test_by_zero(self):
+&gt;       assert add(0, 1) == 2
+E       assert 1 == 2
+E        +  where 1 = add(0, 1)
+
+tests/test_calc.py:14: AssertionError</failure></testcase><testcase classname="tests.test_calc" name="test_skip_me" file="tests/test_calc.py" line="20" time="0.000"><skipped type="pytest.skip" message="not today">/abs/path/to/project/tests/test_calc.py:20: not today</skipped></testcase><testcase classname="tests.test_io" name="test_fixture_broken" file="tests/test_io.py" line="5" time="0.000"><error message="failed on setup with &quot;NameError: name &apos;missing&apos; is not defined&quot;">tests/conftest.py:9: in broken
+    return missing
+E   NameError: name 'missing' is not defined</error></testcase></testsuite></testsuites>

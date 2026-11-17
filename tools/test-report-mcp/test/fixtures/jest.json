@@ -1,0 +1,72 @@
+{
+  "numFailedTestSuites": 2,
+  "numPassedTestSuites": 1,
+  "numTotalTestSuites": 3,
+  "numFailedTests": 1,
+  "numPassedTests": 2,
+  "numPendingTests": 1,
+  "numTodoTests": 1,
+  "numTotalTests": 5,
+  "startTime": 1763373600000,
+  "success": false,
+  "testResults": [
+    {
+      "name": "/abs/path/to/project/src/__tests__/cart.test.js",
+      "status": "failed",
+      "startTime": 1763373600100,
+      "endTime": 1763373600900,
+      "message": "",
+      "assertionResults": [
+        {
+          "ancestorTitles": ["Cart", "totals"],
+          "fullName": "Cart totals sums prices",
+          "status": "passed",
+          "title": "sums prices",
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": ["Cart", "totals"],
+          "fullName": "Cart totals applies discount éè",
+          "status": "failed",
+          "title": "applies discount éè ✓",
+          "failureMessages": [
+            "\u001b[31mError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m90\u001b[39m\nReceived: \u001b[31m100\u001b[39m\n    at Object.<anonymous> (/abs/path/to/project/src/__tests__/cart.test.js:21:23)\n    at Promise.then.completed (/abs/path/to/project/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/abs/path/to/project/node_modules/jest-circus/build/utils.js:231:10)"
+          ],
+          "location": null
+        },
+        {
+          "ancestorTitles": ["Cart"],
+          "fullName": "Cart todo",
+          "status": "todo",
+          "title": "todo",
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": ["Cart"],
+          "fullName": "Cart skipped one",
+          "status": "pending",
+          "title": "skipped one",
+          "failureMessages": []
+        }
+      ]
+    },
+    {
+      "name": "/abs/path/to/project/src/__tests__/broken.test.js",
+      "status": "failed",
+      "startTime": 1763373600100,
+      "endTime": 1763373601000,
+      "message": "  ● Test suite failed to run\n\n    Cannot find module './missing' from 'src/__tests__/broken.test.js'\n\n      at Resolver.resolveModule (/abs/path/to/project/node_modules/jest-resolve/build/resolver.js:324:11)\n      at Object.<anonymous> (/abs/path/to/project/src/__tests__/broken.test.js:1:1)",
+      "assertionResults": []
+    },
+    {
+      "name": "/abs/path/to/project/src/__tests__/ok.test.js",
+      "status": "passed",
+      "startTime": 1763373600100,
+      "endTime": 1763373600200,
+      "message": "",
+      "assertionResults": [
+        { "ancestorTitles": [], "fullName": "works", "status": "passed", "title": "works", "failureMessages": [] }
+      ]
+    }
+  ]
+}

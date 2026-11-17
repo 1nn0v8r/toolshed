@@ -1,0 +1,19 @@
+{
+  "stats": { "suites": 2, "tests": 4, "passes": 2, "pending": 1, "failures": 1, "duration": 42 },
+  "tests": [],
+  "pending": [],
+  "failures": [
+    {
+      "title": "rejects bad input ü",
+      "fullTitle": "Validator rejects bad input ü",
+      "file": "/abs/path/to/project/test/validator.spec.js",
+      "duration": 3,
+      "err": {
+        "message": "expected 'ok' to equal 'bad'",
+        "stack": "AssertionError: expected 'ok' to equal 'bad'\n    at Context.<anonymous> (test/validator.spec.js:17:30)\n    at processImmediate (node:internal/timers:476:21)",
+        "generatedMessage": false
+      }
+    }
+  ],
+  "passes": []
+}
