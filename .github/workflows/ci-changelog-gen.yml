@@ -1,0 +1,28 @@
+name: changelog-gen
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/changelog-gen/**"
+      - ".github/workflows/ci-changelog-gen.yml"
+      - ".github/workflows/node-tool.yml"
+  pull_request:
+    paths:
+      - "tools/changelog-gen/**"
+      - ".github/workflows/ci-changelog-gen.yml"
+      - ".github/workflows/node-tool.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/node-tool.yml
+    with:
+      tool: changelog-gen
