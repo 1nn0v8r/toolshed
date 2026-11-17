@@ -70,7 +70,7 @@ test("placeholders and references are ignored", () => {
     "password = 'aaaaaaaaaaaaaaaa1'",
     "DB_PASSWORD=",
     "token = null",
-    'apiKey: "test-key-1234567"',
+    'apiKey: "test-key-' + '1234567"',
     `const x = "${"AK" + "IA" + "IOSFODNN7" + "EXAMPLE"}";`,
     "plain text with no secrets at all",
     "",
