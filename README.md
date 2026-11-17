@@ -85,6 +85,7 @@ toolshed/
 |---|---|
 | [Adding a tool](docs/adding-a-tool.md) | Folder layout, README template, CI workflow and release tags for a new tool. |
 | [Using MCP servers](docs/using-mcp-servers.md) | What MCP is and how to register a server with common AI coding assistants. |
+| [Branching and releases](docs/releasing.md) | Protected `main`, issue-first pull requests, versioning, changelogs and how to release a tool. |
 
 ---
 
@@ -96,7 +97,7 @@ Tools are versioned independently with [Semantic Versioning](https://semver.org)
 dev-context-mcp@3.1.0
 ```
 
-Each tool's `CHANGELOG.md` lists what changed in every version.
+Each tool's `CHANGELOG.md` lists what changed in every version, and every tag gets a GitHub release with those notes. `main` is protected and always releasable; see [Branching and releases](docs/releasing.md) for the full process.
 
 ---
 
