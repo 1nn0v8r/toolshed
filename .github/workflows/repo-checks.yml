@@ -1,0 +1,26 @@
+# Repo-wide hygiene: runs commit-guard over every tracked file with the rules
+# in .commit-guard.json (secrets, personal paths, .env files, typography).
+
+name: repo checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      # commit-guard has no runtime dependencies, so no install step is needed.
+      - name: Scan all tracked files
+        run: node tools/commit-guard/src/cli.js check --all
