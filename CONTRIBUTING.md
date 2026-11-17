@@ -18,7 +18,7 @@ Thanks for helping improve toolshed. This guide covers how to report issues, mak
 4. Run the tool's typecheck and tests before you push.
 5. Update the tool's `CHANGELOG.md` under an **Unreleased** heading.
 6. Open a pull request against `main`, put `Closes #<issue>` in the description and fill in the template. The required `linked-issue` and `changelog` checks fail without them.
-7. Once all checks pass, the pull request is squash merged.
+7. Once all checks pass, the pull request is squash merged (or rebase merged when each commit stands on its own).
 
 Keep each pull request focused on one tool and one change. Small pull requests get reviewed faster.
 

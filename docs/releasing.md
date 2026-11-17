@@ -6,7 +6,7 @@ How changes reach `main` and how tools are released. The rules below are enforce
 
 1. **Issue first.** Every change starts with an issue.
 2. **Branch and pull request.** Nothing is pushed to `main` directly, by anyone.
-3. **Checks pass, then squash merge.** One commit per pull request lands on `main`.
+3. **Checks pass, then merge** with squash (default) or rebase. History on `main` stays linear.
 4. **Release by tag.** Each tool is released on its own with a tag like `repo-pack@0.2.0`.
 
 ## Branching: trunk-based
@@ -38,7 +38,9 @@ The `main` ruleset applies to everyone, including the repo owner:
   - `gitleaks`: no secrets in git history.
 - **Branch must be up to date** with `main` before merging.
 - **Conversations resolved:** all review comments must be resolved.
-- **Squash merge only,** so `main` reads as one commit per pull request.
+- **Linear history:** squash merge (the default) or rebase merge. No merge commits.
+  - **Squash** a pull request that is one logical change: `main` gets one commit with the PR title.
+  - **Rebase** a pull request whose commits are each meaningful and well written (for example a batch of separate tool additions), so they land on `main` one by one.
 
 Each tool's own CI (typecheck and tests on Windows, macOS and Linux) runs whenever its folder changes. Do not merge with a red tool CI run, even though path-filtered checks cannot be marked as required.
 
