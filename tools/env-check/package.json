@@ -1,0 +1,43 @@
+{
+  "name": "env-check",
+  "version": "0.1.0",
+  "description": "Compare the environment variables your code reads with what .env.example documents, so missing or stale settings are caught in CI.",
+  "type": "module",
+  "bin": {
+    "env-check": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "keywords": [
+    "env",
+    "dotenv",
+    "environment-variables",
+    "lint",
+    "ci",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/env-check"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/env-check#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
