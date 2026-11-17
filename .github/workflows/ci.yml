@@ -56,8 +56,9 @@ jobs:
               changed=$(printf '%s\n' "$files" | grep -E '^tools/[^/]+/' | cut -d/ -f2 | sort -u || true)
             fi
           fi
-          json=$(printf '%s\n' $changed | grep -v '^$' | jq -R . | jq -sc . 2>/dev/null || echo '[]')
-          [ -z "$json" ] && json='[]'
+          # Build the JSON list in one pass, dropping blank lines. Always exactly one
+          # line of output: "[]" when nothing changed.
+          json=$(printf '%s\n' $changed | jq -R . | jq -sc 'map(select(length > 0))')
           echo "tools=$json" >> "$GITHUB_OUTPUT"
           echo "Testing: $json"
 
@@ -167,8 +168,8 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  # The single required check for tool tests. It passes when nothing changed
-  # or when every test job succeeded, and fails otherwise.
+  # The single required check for tool tests. It fails when change detection
+  # fails, passes when nothing changed, and otherwise needs every test job to pass.
   ci:
     name: ci
     needs: [changes, test-linux, test-hosted, integration]
@@ -177,13 +178,18 @@ jobs:
     steps:
       - name: Summarize
         env:
+          R_CHANGES: ${{ needs.changes.result }}
           R_LINUX: ${{ needs.test-linux.result }}
           R_HOSTED: ${{ needs.test-hosted.result }}
           R_INT: ${{ needs.integration.result }}
           TOOLS: ${{ needs.changes.outputs.tools }}
         run: |
-          echo "tools: $TOOLS"
+          echo "changes: $R_CHANGES, tools: $TOOLS"
           echo "linux: $R_LINUX, hosted: $R_HOSTED, integration: $R_INT"
+          if [ "$R_CHANGES" != "success" ]; then
+            echo "::error::Change detection failed, so no tests ran."
+            exit 1
+          fi
           if [ "$TOOLS" = "[]" ]; then exit 0; fi
           for r in "$R_LINUX" "$R_HOSTED" "$R_INT"; do
             if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then exit 1; fi
