@@ -49,7 +49,7 @@ services:
     image: searxng/searxng:latest
     environment:
       SEARXNG_BASE_URL: http://localhost:8080/
-      SEARXNG_SECRET: ${SEARXNG_SECRET:?set SEARXNG_SECRET (run: just env)}
+      SEARXNG_SECRET: "${SEARXNG_SECRET:?set SEARXNG_SECRET (run: just env)}"
     volumes:
       - ./searxng:/etc/searxng
     expose:

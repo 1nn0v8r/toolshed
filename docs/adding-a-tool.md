@@ -60,14 +60,11 @@ Start at `0.1.0` while the tool is experimental and move to `1.0.0` once its int
 
 ## 4. Add CI
 
-Copy `.github/workflows/ci-dev-context-mcp.yml` to `.github/workflows/ci-<tool-name>.yml` and change:
+For a Node.js tool, copy `.github/workflows/ci-repo-pack.yml` to `.github/workflows/ci-<tool-name>.yml` and replace `repo-pack` with your tool's folder name (in `name`, both `paths` filters and `tool:`). It calls the shared [`node-tool.yml`](../.github/workflows/node-tool.yml) workflow, which runs `npm ci`, `npm run typecheck` and `npm test` on Windows, macOS and Linux with Node 20 and 22. Your `package.json` must define the `typecheck` and `test` scripts.
 
-- the `name`
-- both `paths` filters to `tools/<tool-name>/**` and the workflow file itself
-- `working-directory` to `tools/<tool-name>`
-- the setup, install and test steps for the tool's language
+Pass `os` or `node-versions` to narrow the matrix for a single-platform tool. A tool that needs services (a database, for example) can add its own job next to the shared one; see `ci-db-schema-mcp.yml`.
 
-Keep the operating system matrix (`ubuntu-latest`, `windows-latest`, `macos-latest`) unless the tool is single-platform.
+For another language, write a full workflow in the same shape: the same path filters, an OS matrix and the language's install, check and test steps.
 
 ## 5. List it in the root README
 
@@ -82,7 +79,11 @@ git tag <tool-name>@0.1.0
 git push origin <tool-name>@0.1.0
 ```
 
-Then create a GitHub release from the tag and paste the changelog entry as its notes.
+The [release workflow](../.github/workflows/release.yml) then checks that `package.json` has the same version and that `CHANGELOG.md` has a `## 0.1.0` section, and creates the GitHub release with that section as its notes. [changelog-gen](../tools/changelog-gen) can draft the section from your commits:
+
+```bash
+node tools/changelog-gen/src/cli.js --path tools/<tool-name> --tag-prefix "<tool-name>@" --version-label 0.1.0
+```
 
 ## Checklist
 

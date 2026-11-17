@@ -1,0 +1,49 @@
+# Repo-wide checks on every push and pull request. Both jobs are required.
+#   commit-guard: no secrets, personal paths, .env files or typography characters
+#   gitleaks:     no secrets anywhere in the git history
+#
+# Runs on GitHub-hosted Ubuntu. Keeping these checks off the self-hosted runner
+# means fork pull requests never run code on your machines.
+
+name: repo checks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      # commit-guard has no runtime dependencies, so no install step is needed.
+      - name: Scan all tracked files
+        run: node tools/commit-guard/src/cli.js check --all
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.24.3"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history: gitleaks must see every commit.
+          fetch-depth: 0
+      # Run the binary directly. gitleaks-action scans only the commit range from
+      # the previous push, which fails on a rewritten history.
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+      - name: Scan full git history
+        run: gitleaks detect --source . --redact --verbose --exit-code 1

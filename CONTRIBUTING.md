@@ -10,11 +10,15 @@ Thanks for helping improve toolshed. This guide covers how to report issues, mak
 
 ## Making a change
 
-1. Fork the repo and create a branch from `main`, named after the change: `fix/dev-context-mcp-shell`, `feat/new-tool-name`, `docs/install-guide`.
-2. Work inside the tool's folder and follow its README's **Development** section.
-3. Run the tool's typecheck and tests before you push.
-4. Update the tool's `CHANGELOG.md` under an **Unreleased** heading.
-5. Open a pull request against `main` and fill in the template.
+`main` is protected: nobody, maintainers included, can push to it directly. Every change goes through an issue and a pull request. The full rules and the release process are in [docs/releasing.md](docs/releasing.md).
+
+1. **Open an issue** (or comment on an existing one) describing the bug or change.
+2. Fork the repo and create a branch from `main`, named after the change: `fix/dev-context-mcp-shell`, `feat/new-tool-name`, `docs/install-guide`. Install the repo's pre-commit hook once, so secrets, personal paths and typography characters are caught before they are committed: `node tools/commit-guard/src/cli.js install`.
+3. Work inside the tool's folder and follow its README's **Development** section.
+4. Run the tool's typecheck and tests before you push.
+5. Update the tool's `CHANGELOG.md` under an **Unreleased** heading.
+6. Open a pull request against `main`, put `Closes #<issue>` in the description and fill in the template. The required `linked-issue` and `changelog` checks fail without them.
+7. Once all checks pass, the pull request is squash merged (or rebase merged when each commit stands on its own).
 
 Keep each pull request focused on one tool and one change. Small pull requests get reviewed faster.
 

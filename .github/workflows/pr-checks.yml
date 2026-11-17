@@ -1,0 +1,117 @@
+# Every pull request must be tied to an issue, so each change has a recorded
+# reason. Passes when the PR closes an issue ("Closes #12", "Fixes #12",
+# "Resolves #12", or an issue linked in the PR's Development sidebar), or
+# references an existing open or closed issue with "Refs #12".
+#
+# This check is required by the main branch ruleset. After linking an issue
+# through the sidebar (which fires no PR event), edit the PR description or
+# re-run this job.
+
+name: pr checks
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  linked-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a linked issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          # The body is untrusted input: pass it through the environment, never inline it.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            echo "Dependabot pull request, no issue required."
+            exit 0
+          fi
+
+          owner="${REPO%/*}"
+          name="${REPO#*/}"
+
+          # 1. Issues this PR will close (keywords or the Development sidebar).
+          closing=$(gh api graphql \
+            -f query='query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){closingIssuesReferences(first:10){nodes{number}}}}}' \
+            -f owner="$owner" -f name="$name" -F number="$PR_NUMBER" \
+            --jq '[.data.repository.pullRequest.closingIssuesReferences.nodes[].number] | map(tostring) | join(" ")')
+          if [ -n "$closing" ]; then
+            echo "Linked issue(s): #${closing// / #}"
+            exit 0
+          fi
+
+          # 2. Non-closing references such as "Refs #12" or "Part of #12".
+          refs=$(printf '%s' "${PR_BODY:-}" \
+            | grep -oiE '(refs?|references|part of|related to|see)[[:space:]:]+#[0-9]+' \
+            | grep -oE '[0-9]+' | sort -un || true)
+          for n in $refs; do
+            # Must exist and be an issue, not a pull request.
+            if gh api "repos/$REPO/issues/$n" --jq 'if .pull_request then "pr" else "issue" end' 2>/dev/null | grep -qx issue; then
+              echo "Referenced issue: #$n"
+              exit 0
+            fi
+          done
+
+          {
+            echo "### This pull request is not linked to an issue"
+            echo ""
+            echo "Every change in this repo starts with an issue. Open one (bug report or feature request),"
+            echo "then add one of these lines to the PR description:"
+            echo ""
+            echo '- `Closes #<number>` when this PR completes the issue'
+            echo '- `Refs #<number>` when it is only part of the work'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Link an issue: add 'Closes #<number>' or 'Refs #<number>' to the PR description."
+          exit 1
+
+  # Keeps release notes honest: a PR that changes a tool's source must add a line
+  # to that tool's CHANGELOG.md (under "## Unreleased"). Add the label
+  # "skip-changelog" for changes users cannot see, such as refactors or tests.
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require changelog entries for changed tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SKIP: ${{ contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+        run: |
+          set -euo pipefail
+          if [ "$SKIP" = "true" ]; then
+            echo "Label skip-changelog is set, not checking."
+            exit 0
+          fi
+
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')
+
+          # Tools whose shipped code or dependencies changed.
+          changed=$(printf '%s\n' "$files" \
+            | grep -E '^tools/[^/]+/(src/|package\.json$)' \
+            | cut -d/ -f2 | sort -u || true)
+
+          missing=""
+          for tool in $changed; do
+            if ! printf '%s\n' "$files" | grep -qx "tools/$tool/CHANGELOG.md"; then
+              missing="$missing $tool"
+            fi
+          done
+
+          if [ -n "$missing" ]; then
+            for tool in $missing; do
+              echo "::error::tools/$tool changed but tools/$tool/CHANGELOG.md was not updated. Add an entry under '## Unreleased', or add the label skip-changelog."
+            done
+            exit 1
+          fi
+          echo "Changelog entries present for: ${changed:-no tool source changes}"

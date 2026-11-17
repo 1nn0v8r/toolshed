@@ -1,0 +1,33 @@
+{"Time":"2026-11-17T10:00:00Z","Action":"start","Package":"example.com/proj/calc"}
+{"Time":"2026-11-17T10:00:00Z","Action":"run","Package":"example.com/proj/calc","Test":"TestAdd"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestAdd","Output":"=== RUN   TestAdd\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestAdd","Output":"--- PASS: TestAdd (0.00s)\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"pass","Package":"example.com/proj/calc","Test":"TestAdd","Elapsed":0}
+{"Time":"2026-11-17T10:00:00Z","Action":"run","Package":"example.com/proj/calc","Test":"TestTable"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestTable","Output":"=== RUN   TestTable\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"run","Package":"example.com/proj/calc","Test":"TestTable/café"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestTable/café","Output":"=== RUN   TestTable/café\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestTable/café","Output":"    calc_test.go:27: got 3, want 4\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestTable/café","Output":"    --- FAIL: TestTable/café (0.00s)\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"fail","Package":"example.com/proj/calc","Test":"TestTable/café","Elapsed":0}
+{"Time":"2026-11-17T10:00:00Z","Action":"run","Package":"example.com/proj/calc","Test":"TestTable/ok"}
+{"Time":"2026-11-17T10:00:00Z","Action":"pass","Package":"example.com/proj/calc","Test":"TestTable/ok","Elapsed":0}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestTable","Output":"--- FAIL: TestTable (0.00s)\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"fail","Package":"example.com/proj/calc","Test":"TestTable","Elapsed":0}
+{"Time":"2026-11-17T10:00:00Z","Action":"run","Package":"example.com/proj/calc","Test":"TestSkip"}
+{"Time":"2026-11-17T10:00:00Z","Action":"skip","Package":"example.com/proj/calc","Test":"TestSkip","Elapsed":0}
+{"Time":"2026-11-17T10:00:00Z","Action":"run","Package":"example.com/proj/calc","Test":"TestPanic"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestPanic","Output":"panic: boom [recovered]\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestPanic","Output":"\tpanic: boom\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestPanic","Output":"goroutine 7 [running]:\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestPanic","Output":"example.com/proj/calc.TestPanic(0x1)\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Test":"TestPanic","Output":"\t/abs/path/to/project/calc/calc_test.go:40 +0x1d\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"fail","Package":"example.com/proj/calc","Test":"TestPanic","Elapsed":0}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/calc","Output":"FAIL\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"fail","Package":"example.com/proj/calc","Elapsed":0.25}
+{"ImportPath":"example.com/proj/broken [example.com/proj/broken.test]","Action":"build-output","Output":"# example.com/proj/broken [example.com/proj/broken.test]\n"}
+{"ImportPath":"example.com/proj/broken [example.com/proj/broken.test]","Action":"build-output","Output":"broken/broken_test.go:5:2: undefined: nope\n"}
+{"ImportPath":"example.com/proj/broken [example.com/proj/broken.test]","Action":"build-fail"}
+{"Time":"2026-11-17T10:00:00Z","Action":"start","Package":"example.com/proj/broken"}
+{"Time":"2026-11-17T10:00:00Z","Action":"output","Package":"example.com/proj/broken","Output":"FAIL\texample.com/proj/broken [build failed]\n"}
+{"Time":"2026-11-17T10:00:00Z","Action":"fail","Package":"example.com/proj/broken","Elapsed":0,"FailedBuild":"example.com/proj/broken [example.com/proj/broken.test]"}

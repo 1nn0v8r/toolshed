@@ -1,0 +1,43 @@
+{
+  "name": "changelog-gen",
+  "version": "0.1.0",
+  "description": "Turn git commit messages into Keep a Changelog entries. Works in monorepos with per-tool tags and CHANGELOG.md files.",
+  "type": "module",
+  "bin": {
+    "changelog-gen": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "keywords": [
+    "changelog",
+    "keep-a-changelog",
+    "conventional-commits",
+    "git",
+    "monorepo",
+    "release-notes"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/changelog-gen"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/changelog-gen#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^7.0.2"
+  }
+}

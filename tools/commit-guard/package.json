@@ -1,0 +1,44 @@
+{
+  "name": "commit-guard",
+  "version": "0.1.0",
+  "description": "Zero-dependency CLI and git pre-commit hook that blocks commits containing secrets, personal paths, .env files, oversized files and optional typography characters.",
+  "type": "module",
+  "bin": {
+    "commit-guard": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "keywords": [
+    "git",
+    "pre-commit",
+    "hook",
+    "secrets",
+    "secret-scanning",
+    "security",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/commit-guard"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/commit-guard#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.6.0"
+  }
+}

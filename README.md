@@ -12,7 +12,16 @@ Each tool lives in its own folder under [`tools/`](tools), with its own install 
 
 | Tool | What it does | Type | Platforms | Status |
 |---|---|---|---|---|
+| [changelog-gen](tools/changelog-gen) | Turns commit messages into Keep a Changelog entries, with per-tool tags and paths for monorepos. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
+| [claude-code-hooks](tools/claude-code-hooks) | Claude Code hooks that block reading secret files, writing secrets and destructive shell commands, and auto-format edits. Includes an installer. | Hooks | Windows, macOS, Linux | Beta (0.1.0) |
+| [commit-guard](tools/commit-guard) | Pre-commit hook and CLI that blocks secrets, personal paths, `.env` files and oversized files. | CLI, git hook | Windows, macOS, Linux | Beta (0.1.0) |
+| [db-schema-mcp](tools/db-schema-mcp) | Read-only schema inspection and guarded SELECT queries for PostgreSQL and MySQL. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
 | [dev-context-mcp](tools/dev-context-mcp) | Gives AI coding assistants a token-capped toolset for searching, reading and editing code, git, quality checks and the web. | MCP server | Windows, macOS, Linux | Stable (3.1.0) |
+| [env-check](tools/env-check) | Finds env vars your code reads that `.env.example` does not document, and stale ones it does. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
+| [git-history-mcp](tools/git-history-mcp) | Answers "why is this code like this?" from git history: file history, grouped blame, line origin, churn. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
+| [repo-pack](tools/repo-pack) | Bundles chosen project files into one prompt-ready Markdown or XML file within a token budget. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
+| [test-report-mcp](tools/test-report-mcp) | Runs your tests and returns only the failures: names, file:line, message and a trimmed stack. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
+| [token-count](tools/token-count) | Estimates the token cost of files and folders, or counts exactly with the Anthropic API. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 
 <!--
 Add new tools above this comment, one row each, in alphabetical order.
@@ -76,6 +85,7 @@ toolshed/
 |---|---|
 | [Adding a tool](docs/adding-a-tool.md) | Folder layout, README template, CI workflow and release tags for a new tool. |
 | [Using MCP servers](docs/using-mcp-servers.md) | What MCP is and how to register a server with common AI coding assistants. |
+| [Branching and releases](docs/releasing.md) | Protected `main`, issue-first pull requests, versioning, changelogs and how to release a tool. |
 
 ---
 
@@ -87,7 +97,7 @@ Tools are versioned independently with [Semantic Versioning](https://semver.org)
 dev-context-mcp@3.1.0
 ```
 
-Each tool's `CHANGELOG.md` lists what changed in every version.
+Each tool's `CHANGELOG.md` lists what changed in every version, and every tag gets a GitHub release with those notes. `main` is protected and always releasable; see [Branching and releases](docs/releasing.md) for the full process.
 
 ---
 
@@ -95,8 +105,9 @@ Each tool's `CHANGELOG.md` lists what changed in every version.
 
 Ideas under consideration. Open an issue to suggest one or to vote with a reaction.
 
-- [ ] Publish dev-context-mcp to npm for one-line `npx` installs
-- [ ] More tools (see [issues labelled `new-tool`](https://github.com/1nn0v8r/toolshed/issues?q=label%3Anew-tool))
+- [ ] Publish the tools to npm for one-line `npx` installs
+- [ ] First tagged releases (`<tool>@0.1.0`) once CI is green on every OS
+- [ ] More tools: open a feature request with the "New tool" option
 
 ---
 

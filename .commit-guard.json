@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "text.typography": "error",
+    "path.personal": "error"
+  },
+  "ignoreFiles": [
+    "tools/commit-guard/test/**",
+    "tools/claude-code-hooks/test/**"
+  ]
+}

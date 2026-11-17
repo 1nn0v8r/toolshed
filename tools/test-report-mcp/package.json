@@ -1,0 +1,48 @@
+{
+  "name": "test-report-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that runs a project's tests and returns only what an AI assistant needs to fix failures: names, file:line, assertion message and a trimmed stack.",
+  "type": "module",
+  "bin": {
+    "test-report-mcp": "src/server.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "testing",
+    "test-report",
+    "vitest",
+    "jest",
+    "pytest",
+    "token-efficiency"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/test-report-mcp"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/test-report-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.0"
+  }
+}

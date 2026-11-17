@@ -1,0 +1,43 @@
+{
+  "name": "token-count",
+  "version": "0.1.0",
+  "description": "Estimate how many tokens files or folders will cost before you paste them into an AI assistant.",
+  "type": "module",
+  "bin": {
+    "token-count": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "keywords": [
+    "tokens",
+    "llm",
+    "cli",
+    "context",
+    "anthropic",
+    "estimate"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/token-count"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/token-count#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

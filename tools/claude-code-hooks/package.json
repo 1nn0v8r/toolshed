@@ -1,0 +1,45 @@
+{
+  "name": "claude-code-hooks",
+  "version": "0.1.0",
+  "description": "Safety and quality hooks for Claude Code (protect sensitive files, block secrets, guard risky shell commands, auto-format) plus an installer that wires them into settings.json.",
+  "type": "module",
+  "bin": {
+    "claude-code-hooks": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "keywords": [
+    "claude-code",
+    "claude",
+    "hooks",
+    "safety",
+    "secrets",
+    "guardrails",
+    "ai",
+    "developer-tools"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/claude-code-hooks"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/claude-code-hooks#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.0"
+  }
+}

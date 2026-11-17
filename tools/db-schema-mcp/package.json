@@ -1,0 +1,53 @@
+{
+  "name": "db-schema-mcp",
+  "version": "0.1.0",
+  "description": "Read-only MCP server for inspecting a PostgreSQL or MySQL schema and running guarded SELECT queries, with compact output.",
+  "type": "module",
+  "bin": {
+    "db-schema-mcp": "src/server.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "postgres",
+    "postgresql",
+    "mysql",
+    "database",
+    "schema",
+    "read-only"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/db-schema-mcp"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/db-schema-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "mysql2": "^3.24.6",
+    "pg": "^8.23.1",
+    "pg-cursor": "^2.22.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/pg": "^8.23.1",
+    "@types/pg-cursor": "^2.7.2",
+    "typescript": "^7.0.2"
+  }
+}
