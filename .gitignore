@@ -155,3 +155,110 @@ vite.config.ts.timestamp-*
 .nx/cache
 .nx/workspace-data
 .nx/migrate-runs
+
+# -----------------------------------------------------------------------------
+# Strict Machine, Sensitive Data & Security Exclusions
+# -----------------------------------------------------------------------------
+
+# OS Metadata & Machine Artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+ehthumbs_vista.db
+Thumbs.db
+Thumbs.db:encryptable
+desktop.ini
+$RECYCLE.BIN/
+
+# AI Assistants, Agents & LLM Local Configs
+.claude/
+.claude.json
+.cursor/
+.cursorrules
+.windsurf/
+.codeium/
+.copilot/
+.agents/
+.agent/
+.gemini/
+
+# IDE & Editor Configurations
+.vscode/
+*.code-workspace
+.idea/
+*.iml
+*.iws
+*.ipr
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+nbproject/
+*.swp
+*.swo
+*.swn
+*~
+\#*\#
+.\#*
+
+# Secrets, Private Keys, Certificates & Tokens
+*.pem
+*.key
+*.pkcs12
+*.pfx
+*.p12
+*.cer
+*.crt
+*.der
+id_rsa*
+id_dsa*
+id_ed25519*
+id_ecdsa*
+*.keystore
+*.jks
+credentials.json
+client_secret*.json
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+.aws/
+.gcloud/
+.azure/
+*.credentials
+token.json
+auth.json
+.npmrc.local
+
+# Local Overrides & Machine-Specific Configs
+*.local
+*.local.*
+*.local.json
+settings.local.json
+mcp.local.json
+
+# Local Databases, Stores & Dumps
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.dump
+*.sql.gz
+dump.rdb
+
+# Scratch, Temporary & Backup Files
+scratch/
+temp/
+tmp/
+*.bak
+*.backup
+*.tmp
+*.temp
+*.orig
+*.stackdump
+core
+core.*

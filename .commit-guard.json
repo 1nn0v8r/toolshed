@@ -1,7 +1,8 @@
 {
   "rules": {
     "text.typography": "error",
-    "path.personal": "error"
+    "path.personal": "error",
+    "file.large": "error"
   },
   "ignoreFiles": [
     "tools/commit-guard/test/**",
