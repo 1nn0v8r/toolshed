@@ -113,6 +113,17 @@ test("--order path", async () => {
   }
 });
 
+test("--priority boosts matching files and ensures inclusion under max-tokens", async () => {
+  const d = project();
+  try {
+    const r = await packIn(d, ["--priority", "src/deep/more.js", "--max-tokens", "40"]);
+    assert.equal(r.status, "ok");
+    assert.equal(r.files[0].path, "src/deep/more.js");
+  } finally {
+    rmDir(d);
+  }
+});
+
 test("include, exclude and positional scopes", async () => {
   const d = project();
   try {

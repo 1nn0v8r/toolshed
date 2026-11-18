@@ -6,6 +6,7 @@ import { parseArgs, parseSize, UsageError } from "../src/args.js";
 test("defaults", () => {
   const o = parseArgs([]);
   assert.deepEqual(o.paths, []);
+  assert.deepEqual(o.priority, []);
   assert.equal(o.maxFileSize, 256 * 1024);
   assert.equal(o.maxTokens, null);
   assert.equal(o.order, "priority");
@@ -17,10 +18,11 @@ test("defaults", () => {
 });
 
 test("positionals, repeatable include and exclude, both value styles", () => {
-  const o = parseArgs(["src", "lib", "--include", "*.js", "--include=*.ts", "--exclude", "a", "--exclude=b"]);
+  const o = parseArgs(["src", "lib", "--include", "*.js", "--include=*.ts", "--exclude", "a", "--exclude=b", "--priority", "src/index.ts", "--priority=schema.prisma"]);
   assert.deepEqual(o.paths, ["src", "lib"]);
   assert.deepEqual(o.include, ["*.js", "*.ts"]);
   assert.deepEqual(o.exclude, ["a", "b"]);
+  assert.deepEqual(o.priority, ["src/index.ts", "schema.prisma"]);
 });
 
 test("flags and values", () => {

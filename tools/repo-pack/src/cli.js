@@ -17,6 +17,7 @@ becomes the root. Token counts are estimates (ceil(characters / 4)).
 Options:
   --include <glob>        Keep only matching files (repeatable)
   --exclude <glob>        Drop matching files (repeatable)
+  --priority <glob>       Boost matching files to the front of the pack order (repeatable)
   --max-tokens <n>        Stop adding files once the estimated budget is used
   --order <priority|path> priority (default): docs, config, source, tests.
                           path: plain path order
