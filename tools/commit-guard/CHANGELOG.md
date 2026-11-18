@@ -2,6 +2,11 @@
 
 All notable changes to commit-guard. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Added
+- `--fix` flag on `commit-guard check` to automatically replace em dash, en dash and ellipsis characters with ASCII equivalents in place, re-staging modified files when checking staged changes.
+
 ## 0.1.0 - 2026-11-17
 
 ### Added

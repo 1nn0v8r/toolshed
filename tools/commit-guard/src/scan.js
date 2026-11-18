@@ -1,5 +1,5 @@
 // @ts-check
-import { isEnvFile } from "./rules.js";
+import { ELLIPSIS, EM_DASH, EN_DASH, isEnvFile } from "./rules.js";
 
 /**
  * @typedef {{
@@ -95,4 +95,37 @@ export function scanFileRules(file, size, opts) {
     }
   }
   return out;
+}
+
+/**
+ * Fix typography characters in text lines, respecting ignore markers and allow regexes.
+ * @param {string} text
+ * @param {RegExp[]} [allow]
+ * @returns {{ text: string, fixedCount: number }}
+ */
+export function fixTypographyInText(text, allow = []) {
+  let fixedCount = 0;
+  const isCrlf = text.includes("\r\n");
+  const lines = text.split(/\r?\n/);
+  const fixedLines = lines.map((line) => {
+    if (line.includes(IGNORE_MARKER)) return line;
+    if (allow.some((re) => re.test(line))) return line;
+    let newLine = line;
+    for (const [ch, rep] of [
+      [EM_DASH, "--"],
+      [EN_DASH, "-"],
+      [ELLIPSIS, "..."],
+    ]) {
+      if (newLine.includes(ch)) {
+        const count = newLine.split(ch).length - 1;
+        fixedCount += count;
+        newLine = newLine.replaceAll(ch, rep);
+      }
+    }
+    return newLine;
+  });
+  return {
+    text: fixedLines.join(isCrlf ? "\r\n" : "\n"),
+    fixedCount,
+  };
 }

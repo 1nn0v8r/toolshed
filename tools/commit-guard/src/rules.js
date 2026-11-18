@@ -14,9 +14,24 @@
  * }} Rule
  */
 
-const EM_DASH = String.fromCharCode(0x2014);
-const EN_DASH = String.fromCharCode(0x2013);
-const ELLIPSIS = String.fromCharCode(0x2026);
+export const EM_DASH = String.fromCharCode(0x2014);
+export const EN_DASH = String.fromCharCode(0x2013);
+export const ELLIPSIS = String.fromCharCode(0x2026);
+
+/**
+ * Replace typography characters with ASCII equivalents:
+ * - Em dash (U+2014) -> "--"
+ * - En dash (U+2013) -> "-"
+ * - Ellipsis (U+2026) -> "..."
+ * @param {string} text
+ * @returns {string}
+ */
+export function fixTypography(text) {
+  return text
+    .replaceAll(EM_DASH, "--")
+    .replaceAll(EN_DASH, "-")
+    .replaceAll(ELLIPSIS, "...");
+}
 
 /**
  * Show the first 4 characters then "***". Never returns the full value.
