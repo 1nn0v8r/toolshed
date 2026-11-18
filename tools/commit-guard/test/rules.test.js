@@ -1,7 +1,7 @@
 // @ts-check
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { RULES, RULE_IDS, isEnvFile, isPlaceholder, mask } from "../src/rules.js";
+import { RULES, RULE_IDS, fixTypography, isEnvFile, isPlaceholder, mask } from "../src/rules.js";
 import { EM, EN, ELL, fake, unixHome, winHome } from "./helpers.js";
 
 /** @param {string} id */
@@ -160,6 +160,9 @@ describe("text.typography", () => {
   });
   it("ignores plain punctuation", () => {
     assert.deepEqual(scan("a - b -- c ... d"), []);
+  });
+  it("fixTypography replaces em dash, en dash and ellipsis", () => {
+    assert.equal(fixTypography(`a ${EM} b ${EN} c ${ELL}`), "a -- b - c ...");
   });
 });
 

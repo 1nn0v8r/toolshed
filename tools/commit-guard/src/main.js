@@ -6,10 +6,10 @@ import { parseArgs } from "./args.js";
 import { ConfigError, loadConfig, resolveRules } from "./config.js";
 import { parseDiff } from "./diff.js";
 import { formatFinding, formatJson, formatRules, formatSummary, summarize } from "./format.js";
-import { GitMissingError, repoRoot, stagedDiff, stagedFiles, stagedSizes, trackedFiles } from "./git.js";
+import { GitMissingError, git, repoRoot, stagedDiff, stagedFiles, stagedSizes, trackedFiles } from "./git.js";
 import { makeMatcher } from "./glob.js";
 import { installHook, uninstallHook } from "./hook.js";
-import { isBinary, scanFileRules, scanLines, textToLines } from "./scan.js";
+import { fixTypographyInText, isBinary, scanFileRules, scanLines, textToLines } from "./scan.js";
 
 export const VERSION = "0.1.0";
 /** Content larger than this is not read for content rules (file.large still applies). */
@@ -21,7 +21,7 @@ const HELP = `commit-guard ${VERSION}
 Block commits that contain secrets, personal paths, .env files and oversized files.
 
 Usage:
-  commit-guard check [--staged | --all | <files...>] [--json]
+  commit-guard check [--staged | --all | <files...>] [--fix] [--json]
   commit-guard install [--force]
   commit-guard uninstall
   commit-guard rules [--json]
@@ -35,6 +35,7 @@ Commands:
 Options:
   --staged    scan only added lines of the staged diff (default for check)
   --all       scan every tracked file
+  --fix       auto-fix typography characters in place
   --json      machine-readable output (check, rules)
   --force     replace an existing pre-commit hook (it is backed up)
   -h, --help  show this help
@@ -153,6 +154,31 @@ function runCheck(parsed, io) {
     maxFileSizeKB: cfg.maxFileSizeKB,
   };
   const ignored = makeMatcher(cfg.ignoreFiles);
+  const typoRule = opts.rules.find((r) => r.id === "text.typography");
+  const fixTypographyEnabled = typoRule ? typoRule.enabled : false;
+  let totalFixed = 0;
+
+  /**
+   * @param {string} abs
+   * @returns {number}
+   */
+  const fixFile = (abs) => {
+    if (!parsed.flags.fix || !fixTypographyEnabled) return 0;
+    let buf;
+    try {
+      buf = fs.readFileSync(abs);
+    } catch {
+      return 0;
+    }
+    if (isBinary(buf) || buf.length > MAX_CONTENT_BYTES) return 0;
+    const raw = buf.toString("utf8");
+    const { text: newText, fixedCount } = fixTypographyInText(raw, opts.allow);
+    if (fixedCount > 0) {
+      fs.writeFileSync(abs, newText, "utf8");
+      totalFixed += fixedCount;
+    }
+    return fixedCount;
+  };
 
   /** @type {import('./scan.js').Finding[]} */
   const findings = [];
@@ -174,8 +200,18 @@ function runCheck(parsed, io) {
 
   if (mode === "staged") {
     const rootDir = /** @type {string} */ (root);
-    const diffs = new Map(parseDiff(stagedDiff(rootDir)).map((d) => [d.path, d]));
     const files = stagedFiles(rootDir).filter((f) => !ignored(slash(f)));
+    if (parsed.flags.fix && fixTypographyEnabled) {
+      const restage = [];
+      for (const f of files) {
+        const abs = path.join(rootDir, f);
+        if (fixFile(abs) > 0) restage.push(f);
+      }
+      if (restage.length > 0) {
+        git(["add", "--", ...restage], rootDir);
+      }
+    }
+    const diffs = new Map(parseDiff(stagedDiff(rootDir)).map((d) => [d.path, d]));
     const sizes = stagedSizes(rootDir, files);
     for (const f of files) {
       scanned++;
@@ -196,6 +232,14 @@ function runCheck(parsed, io) {
         continue;
       }
       if (!st.isFile()) continue;
+      if (parsed.flags.fix) {
+        fixFile(abs);
+        try {
+          st = fs.lstatSync(abs);
+        } catch {
+          continue;
+        }
+      }
       scanWorkingFile(abs, rel, st.size);
     }
   } else {
@@ -215,15 +259,30 @@ function runCheck(parsed, io) {
       let rel = slash(path.relative(base, abs));
       if (rel.startsWith("..") || path.isAbsolute(rel)) rel = slash(abs);
       if (ignored(rel)) continue;
+      if (parsed.flags.fix) {
+        fixFile(abs);
+        try {
+          st = fs.statSync(abs);
+        } catch {
+          io.err(`commit-guard: cannot read ${f}\n`);
+          return 2;
+        }
+      }
       scanWorkingFile(abs, rel, st.size);
     }
   }
 
   findings.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : a.line - b.line || a.column - b.column));
   const summary = summarize(findings, scanned);
+  if (totalFixed > 0) {
+    /** @type {any} */ (summary).fixed = totalFixed;
+  }
   if (parsed.flags.json) {
     io.out(formatJson(findings, summary) + "\n");
   } else {
+    if (totalFixed > 0) {
+      io.out(`commit-guard: fixed ${totalFixed} typography character${totalFixed === 1 ? "" : "s"}\n`);
+    }
     for (const f of findings) io.out(formatFinding(f) + "\n");
     io.out(formatSummary(summary) + "\n");
     if (summary.errors > 0) {

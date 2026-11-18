@@ -85,6 +85,10 @@ commit-guard check src/config.js notes.md
 # Machine-readable output
 commit-guard check --json
 
+# Automatically fix typographic punctuation in place
+commit-guard check --fix
+commit-guard check --all --fix
+
 # Hook management
 commit-guard install
 commit-guard install --force     # replace a foreign hook, keeping a backup
@@ -121,6 +125,7 @@ File-level findings (`file.env`, `file.large`) use line `0`.
 | `check` | `--staged` | Scan added lines of the staged diff plus the staged file list (default) |
 | `check` | `--all` | Scan all tracked files |
 | `check` | `<files...>` | Scan the given files in full |
+| `check` | `--fix` | Replace em dashes, en dashes and ellipsis characters in place with ASCII equivalents |
 | `check` | `--json` | Print `{ ok, summary, findings }` as JSON |
 | `install` | `--force` | Replace an existing pre-commit hook that is not ours; the old one is saved as `pre-commit.commit-guard-backup` |
 | `uninstall` | | Remove the hook, only if it carries commit-guard's marker comment |

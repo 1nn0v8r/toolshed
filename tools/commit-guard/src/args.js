@@ -3,7 +3,7 @@
 /**
  * @typedef {{
  *   command: string,
- *   flags: { staged: boolean, all: boolean, json: boolean, force: boolean },
+ *   flags: { staged: boolean, all: boolean, json: boolean, force: boolean, fix: boolean },
  *   files: string[],
  * }} Parsed
  */
@@ -13,7 +13,7 @@ const COMMANDS = ["check", "install", "uninstall", "rules", "help"];
 /** Flags allowed per command. */
 /** @type {Record<string, string[]>} */
 const ALLOWED = {
-  check: ["staged", "all", "json"],
+  check: ["staged", "all", "json", "fix"],
   install: ["force"],
   uninstall: [],
   rules: ["json"],
@@ -28,7 +28,7 @@ export function parseArgs(argv) {
   /** @type {Parsed} */
   const parsed = {
     command: "",
-    flags: { staged: false, all: false, json: false, force: false },
+    flags: { staged: false, all: false, json: false, force: false, fix: false },
     files: [],
   };
   let rest = false;

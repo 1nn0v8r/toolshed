@@ -204,6 +204,27 @@ describe("path and typography rules", () => {
     assert.match(r.stdout, /Ellipsis/);
     assert.ok(!r.stdout.includes(EM) && !r.stdout.includes(ELL), "output itself stays plain");
   });
+
+  it("text.typography auto-fixes typography characters in place with --fix", () => {
+    const d = repo();
+    write(d, "t.md", `a ${EM} b ${ELL}\n`);
+    stage(d, "t.md");
+    write(d, ".commit-guard.json", JSON.stringify({ rules: { "text.typography": "error" } }));
+    const r = runCli(d, ["check", "--fix"]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /commit-guard: fixed 2 typography characters/);
+    assert.equal(fs.readFileSync(path.join(d, "t.md"), "utf8"), "a -- b ...\n");
+  });
+
+  it("text.typography auto-fixes explicit files with --fix", () => {
+    const d = repo();
+    write(d, "note.md", `first ${EM} second\n`);
+    write(d, ".commit-guard.json", JSON.stringify({ rules: { "text.typography": "error" } }));
+    const r = runCli(d, ["check", "--fix", "note.md"]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /fixed 1 typography character/);
+    assert.equal(fs.readFileSync(path.join(d, "note.md"), "utf8"), "first -- second\n");
+  });
 });
 
 describe("suppression and config", () => {

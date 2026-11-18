@@ -10,8 +10,8 @@ import { formatFinding, formatJson, formatRules, formatSummary, summarize } from
 import { globToRegExp, makeMatcher } from "../src/glob.js";
 import { MARKER, hookScript } from "../src/hook.js";
 import { RULES } from "../src/rules.js";
-import { IGNORE_MARKER, isBinary, scanFileRules, scanLines, textToLines } from "../src/scan.js";
-import { ELL, fake, rmDir, tmpDir } from "./helpers.js";
+import { IGNORE_MARKER, fixTypographyInText, isBinary, scanFileRules, scanLines, textToLines } from "../src/scan.js";
+import { ELL, EM, fake, rmDir, tmpDir } from "./helpers.js";
 
 describe("parseDiff", () => {
   it("returns real line numbers for added lines across hunks", () => {
@@ -218,14 +218,23 @@ describe("scan", () => {
     const none = resolveRules(validateConfig({ rules: { "file.env": "off", "file.large": "off" } }));
     assert.deepEqual(scanFileRules(".env", 99999, { ...opts, rules: none }), []);
   });
+  it("fixTypographyInText replaces characters while respecting ignore markers and allow regexes", () => {
+    const raw = `a ${EM} b\nc ${ELL} d // commit-guard: ignore\ne ${EM} f\n`;
+    const res = fixTypographyInText(raw);
+    assert.equal(res.fixedCount, 2);
+    assert.equal(res.text, `a -- b\nc ${ELL} d // commit-guard: ignore\ne -- f\n`);
+    const allowRes = fixTypographyInText(`allowed: ${EM}`, [/allowed/]);
+    assert.equal(allowRes.fixedCount, 0);
+  });
 });
 
 describe("parseArgs", () => {
   it("parses check variants", () => {
-    const r = /** @type {any} */ (parseArgs(["check", "--staged", "--json"]));
+    const r = /** @type {any} */ (parseArgs(["check", "--staged", "--json", "--fix"]));
     assert.equal(r.parsed.command, "check");
     assert.equal(r.parsed.flags.staged, true);
     assert.equal(r.parsed.flags.json, true);
+    assert.equal(r.parsed.flags.fix, true);
     assert.deepEqual(/** @type {any} */ (parseArgs(["check", "a.js", "b.js"])).parsed.files, ["a.js", "b.js"]);
     assert.deepEqual(/** @type {any} */ (parseArgs(["check", "--", "--odd"])).parsed.files, ["--odd"]);
     assert.equal(/** @type {any} */ (parseArgs(["install", "--force"])).parsed.flags.force, true);
