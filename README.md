@@ -21,6 +21,7 @@ Each tool lives in its own folder under [`tools/`](tools), with its own install 
 | [commit-guard](tools/commit-guard) | Pre-commit hook and CLI that blocks secrets, personal paths, `.env` files and oversized files. | CLI, git hook | Windows, macOS, Linux | Beta (0.1.0) |
 | [db-schema-mcp](tools/db-schema-mcp) | Read-only schema inspection and guarded SELECT queries for PostgreSQL and MySQL. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
 | [dev-context-mcp](tools/dev-context-mcp) | Gives AI coding assistants a token-capped toolset for searching, reading and editing code, git, quality checks and the web. | MCP server | Windows, macOS, Linux | Stable (3.1.0) |
+| [diagnostics-trim-mcp](tools/diagnostics-trim-mcp) | Runs project typecheckers and linters, returning token-compact, deduplicated diagnostics. | MCP server, CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [env-check](tools/env-check) | Finds env vars your code reads that `.env.example` does not document, and stale ones it does. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [git-history-mcp](tools/git-history-mcp) | Answers "why is this code like this?" from git history: file history, grouped blame, line origin, churn. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
 | [repo-pack](tools/repo-pack) | Bundles chosen project files into one prompt-ready Markdown or XML file within a token budget. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
