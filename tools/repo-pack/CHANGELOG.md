@@ -2,6 +2,11 @@
 
 All notable changes to repo-pack. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Added
+- `--priority <glob>` option (repeatable) to boost matching files to the front of the pack order within token budgets.
+
 ## 0.1.0 - 2026-11-17
 
 ### Added

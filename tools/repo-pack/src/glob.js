@@ -47,3 +47,27 @@ export function createMatcher(patterns) {
     return false;
   };
 }
+
+/**
+ * Build a priority matcher returning the 0-based index of the first pattern that matches, or -1.
+ * @param {string[]} patterns
+ * @returns {(relPath: string) => number}
+ */
+export function createPriorityMatcher(patterns) {
+  const tests = patterns
+    .map(normalizePattern)
+    .filter((p) => p.length > 0)
+    .map((p, index) => ({ index, nameOnly: !p.includes("/"), test: picomatch(p, { dot: true }) }));
+  return (relPath) => {
+    if (tests.length === 0) return -1;
+    const parts = relPath.split("/");
+    for (const t of tests) {
+      for (let end = 1; end <= parts.length; end++) {
+        const candidate = parts.slice(0, end).join("/");
+        const name = parts[end - 1];
+        if (t.test(t.nameOnly ? name : candidate)) return t.index;
+      }
+    }
+    return -1;
+  };
+}

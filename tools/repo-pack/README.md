@@ -75,6 +75,9 @@ repo-pack --format xml --line-numbers | pbcopy
 
 # Keep plain path order instead of priority order
 repo-pack --order path
+
+# Prioritize critical files first within token budget
+repo-pack --priority "src/index.ts" --priority "schema.prisma" --max-tokens 20000
 ```
 
 The summary (files packed, estimated tokens, skipped files, files left out) is printed to **stderr**, so stdout stays clean for piping.
@@ -90,6 +93,7 @@ Quote globs so your shell does not expand them first. If the shell does expand t
 | `[paths or globs...]` | Files, folders or globs to pack. Default: the current directory. A single folder argument becomes the root. With several arguments the root is the current folder and every path must be inside it. |
 | `--include <glob>` | Keep only files matching the glob. Repeatable. |
 | `--exclude <glob>` | Drop files matching the glob. Repeatable. Wins over `--include`. |
+| `--priority <glob>` | Boost matching files to the front of the pack order. Repeatable. |
 | `--max-tokens <n>` | Estimated token budget. Files are added in priority order until it is used. Files that do not fit are listed as left out. |
 | `--order <priority\|path>` | `priority` (default) or plain `path` order. See [How files are chosen](#how-files-are-chosen). |
 | `--format <md\|xml>` | Output format. Default `md`. |
@@ -118,6 +122,7 @@ When positional paths and `--include` are both given, a file must satisfy both.
 
    | Tier | What |
    |---|---|
+   | 0 | Priority: files matching `--priority <glob>` in order of arguments |
    | 1 | Docs: `README*` at any depth, plus `.md`, `.mdx`, `.rst`, `.adoc` at the root or inside `docs/`, `doc/`, `documentation/` |
    | 2 | Config: `package.json`, `tsconfig*.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Dockerfile*`, `docker-compose*`, `*.config.js`/`ts`, and dotfiles or `json`/`yaml`/`toml`/`ini` files at the root |
    | 3 | Source: everything else |

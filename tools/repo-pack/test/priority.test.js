@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { estimateTokens } from "../src/tokens.js";
 import { languageFor } from "../src/language.js";
+import { createPriorityMatcher } from "../src/glob.js";
 import { comparePaths, sortByPath, sortByPriority, tierOf } from "../src/priority.js";
 
 test("estimateTokens is ceil(chars / 4)", () => {
@@ -92,4 +93,35 @@ test("comparePaths", () => {
   assert.equal(comparePaths("a", "b"), -1);
   assert.equal(comparePaths("b", "a"), 1);
   assert.equal(comparePaths("a", "a"), 0);
+});
+
+test("priority matching boosts matched files to tier -1", () => {
+  const matcher = createPriorityMatcher(["src/core.ts", "*.prisma"]);
+  assert.equal(tierOf("src/core.ts", matcher), -1);
+  assert.equal(tierOf("schema.prisma", matcher), -1);
+  assert.equal(tierOf("README.md", matcher), 0);
+  assert.equal(tierOf("package.json", matcher), 1);
+  assert.equal(tierOf("src/other.ts", matcher), 2);
+
+  const files = [
+    { path: "README.md" },
+    { path: "src/other.ts" },
+    { path: "schema.prisma" },
+    { path: "src/core.ts" },
+  ];
+  const sorted = sortByPriority(files, matcher).map((f) => f.path);
+  assert.deepEqual(sorted, [
+    "src/core.ts",
+    "schema.prisma",
+    "README.md",
+    "src/other.ts",
+  ]);
+
+  const pathSorted = sortByPath(files, matcher).map((f) => f.path);
+  assert.deepEqual(pathSorted, [
+    "src/core.ts",
+    "schema.prisma",
+    "README.md",
+    "src/other.ts",
+  ]);
 });

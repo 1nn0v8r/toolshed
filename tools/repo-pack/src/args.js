@@ -7,6 +7,7 @@ export class UsageError extends Error {}
  * @property {string[]} paths
  * @property {string[]} include
  * @property {string[]} exclude
+ * @property {string[]} priority
  * @property {number} maxFileSize bytes
  * @property {number | null} maxTokens
  * @property {"priority" | "path"} order
@@ -24,6 +25,7 @@ export const DEFAULT_MAX_FILE_SIZE = 256 * 1024;
 const VALUE_OPTIONS = new Set([
   "include",
   "exclude",
+  "priority",
   "max-file-size",
   "max-tokens",
   "order",
@@ -72,6 +74,7 @@ export function parseArgs(argv) {
     paths: [],
     include: [],
     exclude: [],
+    priority: [],
     maxFileSize: DEFAULT_MAX_FILE_SIZE,
     maxTokens: null,
     order: "priority",
@@ -123,6 +126,9 @@ export function parseArgs(argv) {
           break;
         case "exclude":
           o.exclude.push(value);
+          break;
+        case "priority":
+          o.priority.push(value);
           break;
         case "max-file-size":
           o.maxFileSize = parseSize(value);

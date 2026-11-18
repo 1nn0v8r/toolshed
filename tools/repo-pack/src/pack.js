@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { UsageError } from "./args.js";
 import { listFiles, isEnvFile, isDefaultExcludedFile } from "./discover.js";
-import { createMatcher, isGlob } from "./glob.js";
+import { createMatcher, createPriorityMatcher, isGlob } from "./glob.js";
 import { sortByPath, sortByPriority } from "./priority.js";
 import { addLineNumbers, readForPack } from "./read.js";
 import { renderMarkdown, renderXml } from "./render.js";
@@ -187,7 +187,11 @@ export async function pack(opts, cwd) {
     return result;
   }
 
-  const ordered = opts.order === "path" ? sortByPath(loaded) : sortByPriority(loaded);
+  const priorityMatcher = opts.priority.length > 0 ? createPriorityMatcher(opts.priority) : null;
+  const ordered =
+    opts.order === "path"
+      ? sortByPath(loaded, priorityMatcher)
+      : sortByPriority(loaded, priorityMatcher);
   const { included, omitted } = applyBudget(ordered, opts.maxTokens);
   result.omitted = omitted.map((o) => ({ path: o.path, tokens: o.tokens }));
   if (included.length === 0) {

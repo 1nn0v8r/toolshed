@@ -36,9 +36,13 @@ const ROOT_CONFIG_EXT = /\.(json|jsonc|ya?ml|toml|ini|cfg|conf)$/i;
 
 /**
  * @param {string} relPath forward-slash relative path
- * @returns {number} tier index
+ * @param {((p: string) => number) | null} [priorityMatcher]
+ * @returns {number} tier index (-1 for priority matches, 0..3 otherwise)
  */
-export function tierOf(relPath) {
+export function tierOf(relPath, priorityMatcher = null) {
+  if (priorityMatcher && priorityMatcher(relPath) >= 0) {
+    return -1;
+  }
   const parts = relPath.split("/");
   const base = parts[parts.length - 1];
   const lower = base.toLowerCase();
@@ -72,12 +76,19 @@ export function comparePaths(a, b) {
  * Deterministic priority order. Does not mutate the input.
  * @template {{path: string}} T
  * @param {T[]} items
+ * @param {((p: string) => number) | null} [priorityMatcher]
  * @returns {T[]}
  */
-export function sortByPriority(items) {
+export function sortByPriority(items, priorityMatcher = null) {
   return [...items].sort((x, y) => {
-    const t = tierOf(x.path) - tierOf(y.path);
-    if (t !== 0) return t;
+    const tx = tierOf(x.path, priorityMatcher);
+    const ty = tierOf(y.path, priorityMatcher);
+    if (tx !== ty) return tx - ty;
+    if (tx === -1 && priorityMatcher) {
+      const px = priorityMatcher(x.path);
+      const py = priorityMatcher(y.path);
+      if (px !== py) return px - py;
+    }
     const d = x.path.split("/").length - y.path.split("/").length;
     if (d !== 0) return d;
     return comparePaths(x.path, y.path);
@@ -86,10 +97,24 @@ export function sortByPriority(items) {
 
 /**
  * Plain path order. Does not mutate the input.
+ * If priorityMatcher is provided, priority matches appear first.
  * @template {{path: string}} T
  * @param {T[]} items
+ * @param {((p: string) => number) | null} [priorityMatcher]
  * @returns {T[]}
  */
-export function sortByPath(items) {
-  return [...items].sort((x, y) => comparePaths(x.path, y.path));
+export function sortByPath(items, priorityMatcher = null) {
+  if (!priorityMatcher) {
+    return [...items].sort((x, y) => comparePaths(x.path, y.path));
+  }
+  return [...items].sort((x, y) => {
+    const px = priorityMatcher(x.path);
+    const py = priorityMatcher(y.path);
+    const hasX = px >= 0;
+    const hasY = py >= 0;
+    if (hasX && !hasY) return -1;
+    if (!hasX && hasY) return 1;
+    if (hasX && hasY && px !== py) return px - py;
+    return comparePaths(x.path, y.path);
+  });
 }
