@@ -58,13 +58,16 @@ First release.
 
 Start at `0.1.0` while the tool is experimental and move to `1.0.0` once its interface is stable.
 
-## 4. Add CI
+## 4. CI testing
 
-For a Node.js tool, copy `.github/workflows/ci-repo-pack.yml` to `.github/workflows/ci-<tool-name>.yml` and replace `repo-pack` with your tool's folder name (in `name`, both `paths` filters and `tool:`). It calls the shared [`node-tool.yml`](../.github/workflows/node-tool.yml) workflow, which runs `npm ci`, `npm run typecheck` and `npm test` on Windows, macOS and Linux with Node 20 and 22. Your `package.json` must define the `typecheck` and `test` scripts.
+The repository uses a unified CI matrix in `.github/workflows/ci.yml`. Any new tool placed under `tools/<tool-name>/` is automatically detected when files in its folder change.
 
-Pass `os` or `node-versions` to narrow the matrix for a single-platform tool. A tool that needs services (a database, for example) can add its own job next to the shared one; see `ci-db-schema-mcp.yml`.
+For a Node.js tool:
+- Your `package.json` must define `typecheck` and `test` scripts.
+- CI runs `npm ci`, `npm run typecheck` and `npm test` across Windows, macOS and Linux with Node 20 and 22.
+- If your tool requires background services (such as a database), add a dedicated integration job to `.github/workflows/ci.yml` (see the `db-schema-mcp` integration job for an example).
 
-For another language, write a full workflow in the same shape: the same path filters, an OS matrix and the language's install, check and test steps.
+For other languages, add a corresponding test job to `.github/workflows/ci.yml` following the same path-detection and OS matrix structure.
 
 ## 5. List it in the root README
 
@@ -91,5 +94,5 @@ node tools/changelog-gen/src/cli.js --path tools/<tool-name> --tag-prefix "<tool
 - [ ] No secrets, personal data or machine-specific paths (the secret scan in CI must pass)
 - [ ] README has install, usage, configuration, troubleshooting and development sections
 - [ ] CHANGELOG.md exists
-- [ ] CI workflow added and passing
+- [ ] Tests and typechecks pass (npm run typecheck and npm test)
 - [ ] Row added to the root README
