@@ -20,6 +20,7 @@ Each tool lives in its own folder under [`tools/`](tools), with its own install 
 | [claude-code-hooks](tools/claude-code-hooks) | Claude Code hooks that block reading secret files, writing secrets and destructive shell commands, and auto-format edits. Includes an installer. | Hooks | Windows, macOS, Linux | Beta (0.1.0) |
 | [commit-guard](tools/commit-guard) | Pre-commit hook and CLI that blocks secrets, personal paths, `.env` files and oversized files. | CLI, git hook | Windows, macOS, Linux | Beta (0.1.0) |
 | [db-schema-mcp](tools/db-schema-mcp) | Read-only schema inspection and guarded SELECT queries for PostgreSQL and MySQL. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
+| [dep-check](tools/dep-check) | Scans codebases for unused, missing and misplaced dependencies in package.json. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [dev-context-mcp](tools/dev-context-mcp) | Gives AI coding assistants a token-capped toolset for searching, reading and editing code, git, quality checks and the web. | MCP server | Windows, macOS, Linux | Stable (3.1.0) |
 | [diagnostics-trim-mcp](tools/diagnostics-trim-mcp) | Runs project typecheckers and linters, returning token-compact, deduplicated diagnostics. | MCP server, CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [env-check](tools/env-check) | Finds env vars your code reads that `.env.example` does not document, and stale ones it does. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
