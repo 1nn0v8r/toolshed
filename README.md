@@ -16,6 +16,7 @@ Each tool lives in its own folder under [`tools/`](tools), with its own install 
 
 | Tool | What it does | Type | Platforms | Status |
 |---|---|---|---|---|
+| [agent-rules-sync](tools/agent-rules-sync) | Keeps AI coding instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, Cursor `.mdc`, Copilot) in sync and catches drift, broken references, and token bloat in CI. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [changelog-gen](tools/changelog-gen) | Turns commit messages into Keep a Changelog entries, with per-tool tags and paths for monorepos. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [claude-code-hooks](tools/claude-code-hooks) | Claude Code hooks that block reading secret files, writing secrets and destructive shell commands, and auto-format edits. Includes an installer. | Hooks | Windows, macOS, Linux | Beta (0.1.0) |
 | [commit-guard](tools/commit-guard) | Pre-commit hook and CLI that blocks secrets, personal paths, `.env` files and oversized files. | CLI, git hook | Windows, macOS, Linux | Beta (0.1.0) |

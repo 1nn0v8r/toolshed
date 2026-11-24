@@ -1,0 +1,1 @@
+{"compilerOptions":{"checkJs":true,"noEmit":true,"module":"NodeNext","moduleResolution":"NodeNext","target":"ES2022","strict":true,"skipLibCheck":true,"types":["node"]},"include":["src","test"]}
