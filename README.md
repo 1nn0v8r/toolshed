@@ -88,6 +88,7 @@ Keep instruction files aligned and stop secrets, personal paths, or destructive 
 | [agent-rules-sync](tools/agent-rules-sync) | Keeps AI coding instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, Cursor `.mdc`, Copilot, Windsurf) in sync and catches drift, broken references, and token bloat in CI. | CLI | Zero | Beta (0.1.0) |
 | [claude-code-hooks](tools/claude-code-hooks) | Claude Code hooks that block reading secret files, writing secrets, and destructive shell commands, and auto-format edits. Includes an installer. | Hooks | Zero | Beta (0.1.0) |
 | [commit-guard](tools/commit-guard) | Pre-commit hook and CLI that blocks secrets, personal paths, `.env` files, oversized files, and typographic punctuation. | CLI, git hook | Zero | Beta (0.1.0) |
+| [skill-lint](tools/skill-lint) | Validates Agent Skills (`SKILL.md`) against the open spec, audits startup token budgets, checks broken script/reference links, and flags risky tool permissions. | CLI | Zero | Beta (0.1.0) |
 
 ### Codebase and release maintenance
 

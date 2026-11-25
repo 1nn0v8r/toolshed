@@ -1,0 +1,46 @@
+{
+  "name": "skill-lint",
+  "version": "0.1.0",
+  "description": "Zero-dependency CLI that validates Agent Skills (SKILL.md) against the open spec, audits startup token budgets, checks broken script/reference links, and flags risky tool permissions.",
+  "type": "module",
+  "bin": {
+    "skill-lint": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "AGPL-3.0-only",
+  "keywords": [
+    "agent-skills",
+    "skill-md",
+    "lint",
+    "ai",
+    "claude-code",
+    "cursor",
+    "codex",
+    "tokens",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/skill-lint"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/skill-lint#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
