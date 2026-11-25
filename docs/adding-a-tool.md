@@ -29,7 +29,7 @@ One sentence on what it does and who it is for.
 
 - **Runs on:** Windows, macOS, Linux
 - **Requires:** runtime and version
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ## Install
 ## Usage
@@ -65,7 +65,7 @@ The repository uses a unified CI matrix in `.github/workflows/ci.yml`. Any new t
 For a Node.js tool:
 - Your `package.json` must define `typecheck` and `test` scripts.
 - CI runs `npm ci`, `npm run typecheck` and `npm test` across Windows, macOS and Linux with Node 20 and 22.
-- If your tool requires background services (such as a database), add a dedicated integration job to `.github/workflows/ci.yml` (see the `db-schema-mcp` integration job for an example).
+- If your tool requires background services (such as a database), add a dedicated integration job to `.github/workflows/ci.yml` (see the `dev-context-mcp db integration` job for an example).
 
 For other languages, add a corresponding test job to `.github/workflows/ci.yml` following the same path-detection and OS matrix structure.
 

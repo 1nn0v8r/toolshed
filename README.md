@@ -209,14 +209,13 @@ Measure before you paste, bundle under a hard ceiling, and summarize diffs inste
 
 ```bash
 # 1. Check which files are expensive before sending them
-node /abs/path/to/toolshed/tools/token-count/src/cli.js src/
+toolshed token-count src/
 
 # 2. Pack only relevant source files under a 20k token budget
-node /abs/path/to/toolshed/tools/repo-pack/src/cli.js \
-  --include "src/**" --exclude "test/**" --max-tokens 20000 --output context.md
+toolshed repo-pack --include "src/**" --exclude "test/**" --max-tokens 20000 --output context.md
 
 # 3. Generate a compact PR brief with risk flags and key hunks
-node /abs/path/to/toolshed/tools/diff-brief/src/cli.js --base main --format md
+toolshed diff-brief --base main --format md
 ```
 
 See [Token-Efficient Context Bundling](docs/tips/01-token-efficient-context-bundling.md) for a step-by-step walkthrough.
@@ -227,7 +226,7 @@ Audit your existing MCP servers to see what is eating context before you even ty
 
 ```bash
 # Measure upfront token tax and schema bloat across your MCP config
-node /abs/path/to/toolshed/tools/mcp-audit/src/cli.js --max-tokens 8000
+toolshed mcp-audit --max-tokens 8000
 ```
 
 Pair with [dev-context-mcp](tools/dev-context-mcp) (one unified MCP server with toggleable `core`, `git-history`, `diagnostics`, `test-report`, `web`, and `db` modules).
@@ -236,13 +235,13 @@ Pair with [dev-context-mcp](tools/dev-context-mcp) (one unified MCP server with 
 
 ```bash
 # Keep AGENTS.md, CLAUDE.md, GEMINI.md, Cursor, and Copilot rules in sync
-node /abs/path/to/toolshed/tools/agent-rules-sync/src/cli.js check --max-tokens 1500 --strict
+toolshed agent-rules-sync check --max-tokens 1500 --strict
 
 # Install the pre-commit hook to block secrets, .env files, and personal paths
-node /abs/path/to/toolshed/tools/commit-guard/src/cli.js install
+toolshed commit-guard install
 
 # Install Claude Code hooks to block secret reads and destructive commands
-node /abs/path/to/toolshed/tools/claude-code-hooks/src/cli.js install
+toolshed claude-code-hooks install
 ```
 
 ---
@@ -269,20 +268,27 @@ Every tool follows the same rules:
 
 ```
 toolshed/
-├── tools/                  one standalone folder per tool
+├── bin/toolshed.js         unified zero-dependency CLI entrypoint
+├── cli/                    client config manager (12 AI clients), setup wizard, and Web UI
+├── test/                   root CLI and Web UI tests
+├── tools/                  standalone tool folders + unified dev-context-mcp
 │   └── dev-context-mcp/
 │       ├── README.md       install, usage, configuration
 │       ├── CHANGELOG.md    version history
-│       ├── src/            source code
-│       ├── test/           tests
-│       └── package.json    manifest with typecheck and test scripts
-├── docs/                   shared guides and workflow tips
-│   └── tips/               short, practical AI-coding workflows
-├── .github/                unified CI matrix, repo checks, release workflow
+│       ├── src/            TypeScript server and module router
+│       ├── modules/        git-history, diagnostics, test-report, db-schema modules
+│       ├── test/           module unit and integration tests
+│       └── package.json    manifest with typecheck, build, and test scripts
+├── docs/                   shared guides, UI screenshots, and workflow tips
+├── .github/                CI matrix, PR checks, repo checks, Dependabot, release workflow
+├── Dockerfile              container image for toolshed-ui and dev-context-mcp
+├── docker-compose.yml      local Docker stack (UI on 4317, MCP HTTP on 4318)
+├── package.json            root toolshed package manifest
+├── CHANGELOG.md            root release history
 ├── .commit-guard.json      repo-wide guardrail config (enforced in CI)
 ├── CONTRIBUTING.md
 ├── SECURITY.md
-└── LICENSE
+└── LICENSE                 GNU AGPL-3.0-only
 ```
 
 ---
@@ -291,22 +297,23 @@ toolshed/
 
 | Document | Covers |
 |---|---|
-| [Using MCP servers](docs/using-mcp-servers.md) | What MCP is and how to register a server with common AI coding assistants. |
+| [Using MCP servers](docs/using-mcp-servers.md) | What MCP is and how to register `dev-context-mcp` with common AI coding assistants. |
 | [Token-efficient context bundling](docs/tips/01-token-efficient-context-bundling.md) | 3-step workflow for keeping prompts compact with `token-count` and `repo-pack`. |
 | [Adding a tool](docs/adding-a-tool.md) | Folder layout, README template, CI matrix, and release tags for a new tool. |
-| [Branching and releases](docs/releasing.md) | Protected `main`, issue-first pull requests, versioning, changelogs, and how to release a tool. |
+| [Branching and releases](docs/releasing.md) | Protected `main`, issue-first pull requests, versioning, changelogs, and automated releases. |
 
 ---
 
 ## Releases
 
-Tools are versioned independently with [Semantic Versioning](https://semver.org). Releases are tagged per tool:
+The unified `toolshed` package and individual tools follow [Semantic Versioning](https://semver.org):
 
 ```
-dev-context-mcp@3.1.0
+v1.0.0                   # Root toolshed release (GitHub Release + .tgz + ghcr.io Docker image)
+dev-context-mcp@4.0.0    # Per-tool release (GitHub Release + .tgz tarball)
 ```
 
-Each tool's `CHANGELOG.md` lists what changed in every version, and every tag gets a GitHub release with those notes. `main` is protected and always releasable; see [Branching and releases](docs/releasing.md) for the full process.
+Every tag triggers [.github/workflows/release.yml](.github/workflows/release.yml) to verify the version, extract release notes from `CHANGELOG.md`, attach the `.tgz` tarball, and (for root releases) push the Docker image to `ghcr.io`. `main` is protected and always releasable; see [Branching and releases](docs/releasing.md) for the full process.
 
 ---
 
@@ -314,8 +321,10 @@ Each tool's `CHANGELOG.md` lists what changed in every version, and every tag ge
 
 Ideas under consideration. Open an issue to suggest one or to vote with a reaction.
 
-- [ ] Publish the tools to npm for one-line `npx` installs
-- [ ] First tagged releases (`<tool>@0.1.0`) once CI is green on every OS
+- [x] Unified `dev-context-mcp` v4 with toggleable modules
+- [x] Unified `toolshed` CLI, interactive setup wizard, and visual Web UI (12 AI clients)
+- [x] Automated GitHub Releases with `.tgz` tarballs and `ghcr.io` Docker images
+- [ ] Publish to public npm registry for `npx toolshed ui`
 - [ ] More workflow tips in [`docs/tips/`](docs/tips)
 - [ ] More tools: open a feature request with the "New tool" option
 

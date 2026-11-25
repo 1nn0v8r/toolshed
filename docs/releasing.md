@@ -32,8 +32,9 @@ The `main` ruleset applies to everyone, including the repo owner:
 - **No direct pushes:** every change goes through a pull request.
 - **No force pushes or deletion** of `main`.
 - **Required checks** must pass before merging:
-  - `linked-issue`: the pull request links an issue (`Closes #12` or `Refs #12` in the description).
-  - `changelog`: tools whose `src/` or `package.json` changed also update their `CHANGELOG.md` (label `skip-changelog` for invisible changes).
+  - `ci`: unified CI gate (root CLI/UI tests + cross-platform tests for every changed tool).
+  - `linked-issue`: the pull request links an issue (`Closes #12` or `Refs #12` in the description; Dependabot PRs are exempted).
+  - `changelog`: tools whose `src/` or `package.json` changed also update their `CHANGELOG.md` (label `skip-changelog` for invisible changes; Dependabot PRs are exempted).
   - `commit-guard`: no secrets, personal paths, `.env` files or typography characters anywhere in the repo.
   - `gitleaks`: no secrets in git history.
 - **Branch must be up to date** with `main` before merging.
@@ -93,7 +94,7 @@ Sections: `Added`, `Changed`, `Fixed`, `Removed`, `Documentation`, `Breaking`. [
    git push origin <tool>@<version>
    ```
 
-5. The [release workflow](../.github/workflows/release.yml) checks that the tag, `package.json` and `CHANGELOG.md` agree, then creates the GitHub release with the changelog section as notes. If it fails, fix the mismatch in a new pull request and tag again with a new version (release tags cannot be moved or deleted).
+5. The [release workflow](../.github/workflows/release.yml) checks that the tag, `package.json` and `CHANGELOG.md` agree, packs a `.tgz` tarball, and creates the GitHub release with the changelog section as notes. For root `toolshed` releases (tagged `v<version>` or `toolshed@<version>`), it also builds and pushes `ghcr.io/1nn0v8r/toolshed:<version>` and `:latest`. If it fails, fix the mismatch in a new pull request and tag again with a new version (release tags cannot be moved or deleted).
 
 ## Hotfixes
 
