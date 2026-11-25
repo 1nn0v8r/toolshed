@@ -1,0 +1,178 @@
+// @ts-check
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+export const REPO_ROOT = path.resolve(here, "..");
+export const MCP_DIR = path.join(REPO_ROOT, "tools", "dev-context-mcp");
+export const MCP_ENTRY = path.join(MCP_DIR, "dist", "server.js");
+
+export const MCP_MODULES = [
+  {
+    id: "core",
+    name: "Core Repo Tools",
+    description: "Project manifest, tree, search, grep, capped file reads/edits, git status, scripts, and shell.",
+    toolCount: 31,
+    defaultEnabled: true,
+    tools: [
+      "get_project_manifest", "get_project_tree", "get_architecture_docs",
+      "get_project_context", "get_package_summary", "get_env_vars",
+      "read_file_range", "read_multiple_files", "read_doc", "list_directory",
+      "find_files", "grep", "search_code", "search_docs", "find_references",
+      "find_exports", "find_api_endpoint", "find_schema", "find_todos",
+      "get_audit_summaries", "search_audits", "get_git_status", "get_recent_changes",
+      "get_typecheck_errors", "get_test_failures", "run_script", "run_command",
+      "write_file", "edit_file", "delete_file", "set_repo_root",
+    ],
+  },
+  {
+    id: "git-history",
+    name: "Git History & Blame",
+    description: "File history, grouped blame ranges, line origin, commit search (pickaxe), churn hotspots, and contributors.",
+    toolCount: 7,
+    defaultEnabled: true,
+    tools: [
+      "file_history", "blame_range", "line_origin", "commit_details",
+      "search_commits", "churn", "contributors",
+    ],
+  },
+  {
+    id: "diagnostics",
+    name: "Diagnostics Trimmer",
+    description: "Run typecheckers and linters (tsc, eslint, pyright, ruff, cargo) with deduplicated, compact error reports.",
+    toolCount: 2,
+    defaultEnabled: true,
+    tools: ["check_diagnostics", "trim_diagnostics"],
+  },
+  {
+    id: "test-report",
+    name: "Test Failure Reporter",
+    description: "Auto-detect test runners (vitest, jest, node:test, mocha, pytest, go test) and return only failures with trimmed stacks.",
+    toolCount: 4,
+    defaultEnabled: true,
+    tools: ["detect_test_runner", "run_tests", "parse_report", "list_failures_from_last_run"],
+  },
+  {
+    id: "web",
+    name: "Web & Browser",
+    description: "Fetch stripped page text, web search, and optional Playwright rendering/screenshots.",
+    toolCount: 4,
+    defaultEnabled: true,
+    tools: ["fetch_url", "web_search", "browse_page", "screenshot"],
+  },
+  {
+    id: "db",
+    name: "Database Schema (Read-Only)",
+    description: "Inspect PostgreSQL/MySQL tables, foreign keys, sample rows (masked), and guarded read-only SELECT queries.",
+    toolCount: 6,
+    defaultEnabled: false,
+    requiresEnv: "DATABASE_URL",
+    tools: [
+      "list_tables", "describe_table", "list_relationships",
+      "sample_rows", "run_select", "connection_info",
+    ],
+  },
+];
+
+export const CLI_TOOLS = [
+  {
+    id: "diff-brief",
+    name: "diff-brief",
+    category: "Token & Prompt Hygiene",
+    description: "Summarize sprawling git diffs and PRs into token-compact review briefs with risk flags.",
+    entry: path.join(REPO_ROOT, "tools", "diff-brief", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed diff-brief --base main",
+  },
+  {
+    id: "mcp-audit",
+    name: "mcp-audit",
+    category: "Token & Prompt Hygiene",
+    description: "Audit MCP servers and client configs for upfront token tax, schema bloat, and collisions.",
+    entry: path.join(REPO_ROOT, "tools", "mcp-audit", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed mcp-audit --max-tokens 8000",
+  },
+  {
+    id: "repo-pack",
+    name: "repo-pack",
+    category: "Token & Prompt Hygiene",
+    description: "Bundle chosen project files into one prompt-ready Markdown or XML file under a token budget.",
+    entry: path.join(REPO_ROOT, "tools", "repo-pack", "src", "cli.js"),
+    dir: path.join(REPO_ROOT, "tools", "repo-pack"),
+    needsInstall: true,
+    example: "toolshed repo-pack --max-tokens 20000 --output context.md",
+  },
+  {
+    id: "token-count",
+    name: "token-count",
+    category: "Token & Prompt Hygiene",
+    description: "Estimate token cost of files and folders, or count exactly with the Anthropic API.",
+    entry: path.join(REPO_ROOT, "tools", "token-count", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed token-count src/",
+  },
+  {
+    id: "diagnostics",
+    name: "diagnostics",
+    category: "Token & Prompt Hygiene",
+    description: "Run typecheckers/linters from the CLI and print deduplicated, token-compact diagnostics.",
+    entry: path.join(MCP_DIR, "modules", "diagnostics", "cli.js"),
+    needsInstall: false,
+    example: "toolshed diagnostics -- npm run typecheck",
+  },
+  {
+    id: "agent-rules-sync",
+    name: "agent-rules-sync",
+    category: "Agent & Repo Guardrails",
+    description: "Keep AGENTS.md, CLAUDE.md, GEMINI.md, Cursor, Copilot, and Windsurf rules in sync.",
+    entry: path.join(REPO_ROOT, "tools", "agent-rules-sync", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed agent-rules-sync check",
+  },
+  {
+    id: "claude-code-hooks",
+    name: "claude-code-hooks",
+    category: "Agent & Repo Guardrails",
+    description: "Install Claude Code hooks that block secret reads/writes, destructive shell commands, and auto-format.",
+    entry: path.join(REPO_ROOT, "tools", "claude-code-hooks", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed claude-code-hooks install",
+  },
+  {
+    id: "commit-guard",
+    name: "commit-guard",
+    category: "Agent & Repo Guardrails",
+    description: "Pre-commit hook and CLI blocking secrets, personal paths, .env files, and oversized files.",
+    entry: path.join(REPO_ROOT, "tools", "commit-guard", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed commit-guard check --staged",
+  },
+  {
+    id: "changelog-gen",
+    name: "changelog-gen",
+    category: "Codebase & Release",
+    description: "Turn commit messages into Keep a Changelog entries with monorepo support.",
+    entry: path.join(REPO_ROOT, "tools", "changelog-gen", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed changelog-gen --unreleased",
+  },
+  {
+    id: "dep-check",
+    name: "dep-check",
+    category: "Codebase & Release",
+    description: "Scan codebases for unused, missing, and misplaced dependencies in package.json.",
+    entry: path.join(REPO_ROOT, "tools", "dep-check", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed dep-check",
+  },
+  {
+    id: "env-check",
+    name: "env-check",
+    category: "Codebase & Release",
+    description: "Find env vars your code reads that .env.example does not document, and stale ones it does.",
+    entry: path.join(REPO_ROOT, "tools", "env-check", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed env-check",
+  },
+];

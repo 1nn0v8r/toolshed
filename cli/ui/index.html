@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>toolshed</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0a'/%3E%3Cpath d='M4 13.5L16 5l12 8.5' fill='none' stroke='%23ededed' stroke-width='2.6' stroke-linecap='square' stroke-linejoin='miter'/%3E%3Cpath d='M16 9.5l2.2 1.6V14h-4.4v-2.9z' fill='%2310b981'/%3E%3Cpath d='M7.5 16v9.5h5.5M24.5 16v9.5H19M11.5 17.5h9M16 17.5v8' fill='none' stroke='%23ededed' stroke-width='2.4' stroke-linecap='square'/%3E%3Crect x='10.6' y='20.8' width='2.2' height='2.2' fill='%23ededed'/%3E%3Crect x='19.2' y='20.8' width='2.2' height='2.2' fill='%23ededed'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      /* Geist Dark System (adapted from ai-harness-oss with subtle teal/emerald accent) */
+      --black: #000000;
+      --surface: #0a0a0a;
+      --surface-lift: #111111;
+      --rule: #222222;
+      --rule-strong: #333333;
+      --rule-glow: rgba(255, 255, 255, 0.12);
+
+      --ink: #ededed;
+      --ink-soft: #a1a1a1;
+      --ink-faint: #666666;
+
+      /* Monochrome primary button */
+      --accent: #ededed;
+      --accent-deep: #d4d4d4;
+      --on-accent: #0a0a0a;
+
+      /* Subtle Toolshed Teal/Emerald interactive accent */
+      --brand: #10b981;
+      --brand-deep: #059669;
+      --brand-wash: rgba(16, 185, 129, 0.14);
+      --brand-edge: rgba(16, 185, 129, 0.42);
+      --on-brand: #ffffff;
+
+      --red: #ff6166;
+      --red-wash: rgba(255, 97, 102, 0.12);
+      --amber: #f5a623;
+      --emerald: #10b981;
+
+      --body: 'Geist Variable', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      --text-xs: 12px;
+      --text-sm: 13px;
+      --text-base: 14px;
+      --text-lg: 16px;
+      --text-xl: 22px;
+
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-full: 9999px;
+
+      --control-h: 34px;
+      --control-h-sm: 28px;
+      --dur-fast: 120ms;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+      color-scheme: dark;
+    }
+
+    :root[data-theme='light'] {
+      --black: #fafafa;
+      --surface: #ffffff;
+      --surface-lift: #f5f5f5;
+      --rule: #eaeaea;
+      --rule-strong: #d4d4d4;
+      --rule-glow: rgba(0, 0, 0, 0.08);
+
+      --ink: #171717;
+      --ink-soft: #666666;
+      --ink-faint: #8f8f8f;
+
+      --accent: #171717;
+      --accent-deep: #333333;
+      --on-accent: #ffffff;
+
+      --brand: #059669;
+      --brand-deep: #047857;
+      --brand-wash: rgba(5, 150, 105, 0.1);
+      --brand-edge: rgba(5, 150, 105, 0.35);
+      --on-brand: #ffffff;
+
+      --red: #e5484d;
+      --red-wash: rgba(229, 72, 77, 0.08);
+      --amber: #d97706;
+      --emerald: #059669;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1);
+
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--body);
+      font-size: var(--text-base);
+      line-height: 1.5;
+      background: var(--black);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Shell layout (matching AppVercelShell) */
+    .shell {
+      display: grid;
+      grid-template-columns: 232px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--rule);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-brand {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .brand-mark {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .brand-ver {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-faint);
+    }
+
+    .side-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+    }
+
+    .side-group-lbl {
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--ink-faint);
+      padding: 12px 10px 6px;
+    }
+    .side-group-lbl:first-child { padding-top: 4px; }
+
+    .side-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .side-link {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      height: 32px;
+      padding: 0 10px;
+      border: 0;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      font-family: var(--body);
+      font-size: var(--text-sm);
+      font-weight: 400;
+      color: var(--ink-soft);
+      cursor: pointer;
+      text-align: left;
+      transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+    }
+
+    .side-link:hover {
+      background: var(--surface-lift);
+      color: var(--ink);
+    }
+
+    .side-link.active {
+      background: var(--surface-lift);
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .side-link svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      opacity: 0.75;
+    }
+
+    .side-link.active svg { opacity: 1; color: var(--brand); }
+
+    .side-count {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-faint);
+    }
+
+    .side-foot {
+      padding: 12px 14px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .side-foot-meta {
+      font-size: var(--text-xs);
+      color: var(--ink-faint);
+    }
+
+    /* Main content area */
+    .main-col {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: 56px;
+      padding: 0 28px;
+      background: var(--black);
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .topbar-title {
+      font-size: var(--text-base);
+      font-weight: 500;
+      letter-spacing: -0.015em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content {
+      max-width: 1060px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    /* Page header */
+    .page-head {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+
+    .page-head h1 {
+      margin: 0;
+      font-size: var(--text-xl);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .page-head p {
+      margin: 6px 0 0 0;
+      font-size: var(--text-sm);
+      color: var(--ink-soft);
+    }
+
+    /* Metrics strip */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .metric {
+      padding: 16px 18px;
+      border-right: 1px solid var(--rule);
+    }
+    .metric:last-child { border-right: 0; }
+    .metric-label { font-size: var(--text-xs); color: var(--ink-soft); }
+    .metric-value {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin-top: 4px;
+    }
+    .metric-sub { font-size: var(--text-xs); color: var(--ink-faint); margin-top: 2px; }
+
+    /* Flat hairline panels & cards */
+    .panel {
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: var(--text-base);
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .panel-head .hint {
+      font-size: var(--text-xs);
+      color: var(--ink-soft);
+    }
+
+    .panel-body { padding: 18px; }
+
+    /* Ledger table / list rows */
+    .ledger {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .ledger th {
+      text-align: left;
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--ink-soft);
+      background: var(--surface-lift);
+      border-bottom: 1px solid var(--rule);
+      padding: 9px 16px;
+    }
+
+    .ledger td {
+      font-size: var(--text-sm);
+      border-bottom: 1px solid var(--rule);
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
+
+    .ledger tr:last-child td { border-bottom: 0; }
+    .ledger tbody tr:hover { background: var(--surface-lift); }
+
+    /* Vercel-style Status Indicator (Dot + Neutral Text, NO Pills) */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .status::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ink-faint);
+      flex-shrink: 0;
+    }
+
+    .status.ok::before { background: var(--emerald); }
+    .status.warn::before { background: var(--amber); }
+    .status.err::before { background: var(--red); }
+
+    /* Buttons: Crisp 6px Geist controls */
+    .btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: var(--control-h);
+      padding: 0 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: var(--on-accent);
+      font-family: var(--body);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      letter-spacing: -0.005em;
+      cursor: pointer;
+      transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--accent-deep);
+      border-color: var(--accent-deep);
+    }
+
+    .btn-quiet {
+      background: var(--surface);
+      border-color: var(--rule);
+      color: var(--ink);
+    }
+
+    .btn-quiet:hover:not(:disabled) {
+      background: var(--surface-lift);
+      border-color: var(--rule-strong);
+      color: var(--ink);
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: var(--rule);
+      color: var(--red);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: var(--red-wash);
+      border-color: var(--red);
+    }
+
+    .btn-sm { height: var(--control-h-sm); padding: 0 10px; font-size: var(--text-xs); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 19px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: var(--rule-strong);
+      border-radius: var(--radius-full);
+      transition: background-color var(--dur-fast) ease;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      left: 3px;
+      top: 3px;
+      background: var(--surface);
+      border-radius: 50%;
+      transition: transform var(--dur-fast) ease;
+    }
+    .switch input:checked + .slider { background: var(--brand); }
+    .switch input:checked + .slider::before { transform: translateX(15px); background: var(--on-brand); }
+
+    /* Inputs */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: var(--text-xs); font-weight: 500; color: var(--ink-soft); }
+    .field input {
+      height: var(--control-h);
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--rule);
+      background: var(--black);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: var(--text-xs);
+    }
+    .field input:hover { border-color: var(--rule-strong); }
+    .field input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-wash);
+    }
+
+    .mono { font-family: var(--mono); font-size: var(--text-xs); }
+    .muted { color: var(--ink-soft); }
+    .faint { color: var(--ink-faint); }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .tool-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .tool-chip {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+      background: var(--black);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-xs);
+      padding: 1px 6px;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-size: var(--text-xs);
+      color: var(--ink-soft);
+      margin-top: 6px;
+      user-select: none;
+    }
+    details summary:hover { color: var(--ink); }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      background: var(--black);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-sm);
+      font-family: var(--mono);
+      font-size: var(--text-xs);
+      line-height: 1.55;
+      color: var(--ink);
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      background: var(--surface);
+      border: 1px solid var(--rule-strong);
+      box-shadow: var(--shadow-lg);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      display: none;
+    }
+    .toast.show { display: block; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      place-items: center;
+      padding: 24px;
+    }
+    .modal-backdrop.show { display: grid; }
+    .modal {
+      width: 100%;
+      max-width: 740px;
+      max-height: 80vh;
+      background: var(--surface);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body { padding: 16px; overflow: auto; flex: 1; }
+
+    @media (max-width: 860px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--rule); }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(1), .metric:nth-child(2) { border-bottom: 1px solid var(--rule); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="22" height="22">
+            <path d="M4 13.5L16 5l12 8.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square" stroke-linejoin="miter"/>
+            <path d="M16 9.5l2.2 1.6V14h-4.4v-2.9z" fill="var(--brand)"/>
+            <path d="M7.5 16v9.5h5.5M24.5 16v9.5H19M11.5 17.5h9M16 17.5v8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/>
+            <rect x="10.6" y="20.8" width="2.2" height="2.2" fill="currentColor"/>
+            <rect x="19.2" y="20.8" width="2.2" height="2.2" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="brand-name">toolshed</span>
+        <span class="brand-ver">v4.0</span>
+      </div>
+
+      <nav class="side-nav">
+        <div class="side-group-lbl">Workspace</div>
+        <ul class="side-list">
+          <li>
+            <button class="side-link active" data-view="overview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/></svg>
+              <span>Overview</span>
+            </button>
+          </li>
+          <li>
+            <button class="side-link" data-view="modules">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+              <span>MCP Modules</span>
+              <span class="side-count" id="nav-mod-count">5/6</span>
+            </button>
+          </li>
+          <li>
+            <button class="side-link" data-view="clients">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0V8zM12 18v4"/></svg>
+              <span>AI Clients</span>
+              <span class="side-count" id="nav-client-count">0/6</span>
+            </button>
+          </li>
+          <li>
+            <button class="side-link" data-view="config">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/></svg>
+              <span>Config JSON</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="side-group-lbl">Utilities</div>
+        <ul class="side-list">
+          <li>
+            <button class="side-link" data-view="clis">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17l6-5-6-5M12 19h8"/></svg>
+              <span>CLI Tools</span>
+              <span class="side-count" id="nav-cli-count">11</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="side-foot">
+        <span class="side-foot-meta">dev-context-mcp</span>
+        <button class="btn btn-quiet btn-sm" id="btn-theme">Light</button>
+      </div>
+    </aside>
+
+    <div class="main-col">
+      <header class="topbar">
+        <div class="topbar-title" id="topbar-title">Overview</div>
+        <div class="topbar-actions">
+          <span class="status warn" id="mcp-status">Checking</span>
+          <button class="btn btn-quiet btn-sm" id="btn-rebuild">Rebuild MCP</button>
+          <button class="btn btn-quiet btn-sm" id="btn-refresh">Refresh</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <!-- OVERVIEW -->
+        <section class="view active" id="view-overview">
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Unified MCP &amp; CLI Toolkit</div>
+              <h1>toolshed</h1>
+              <p>One MCP server with toggleable modules and one CLI entry point across all utilities.</p>
+            </div>
+            <div class="row">
+              <button class="btn btn-quiet" data-jump="modules">Configure Modules</button>
+              <button class="btn" data-jump="clients">Connect AI Clients</button>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-label">Unified MCP Server</div>
+              <div class="metric-value" id="stat-mcp">-</div>
+              <div class="metric-sub">dev-context-mcp v4.0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Active Tools</div>
+              <div class="metric-value" id="stat-tools">-</div>
+              <div class="metric-sub" id="stat-tokens">Schema footprint</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Connected Clients</div>
+              <div class="metric-value" id="stat-clients">-</div>
+              <div class="metric-sub">Auto-merged configs</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">CLI Utilities</div>
+              <div class="metric-value" id="stat-clis">-</div>
+              <div class="metric-sub mono">toolshed &lt;tool&gt;</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Quick Module Summary</h2>
+              <button class="btn btn-quiet btn-sm" data-jump="modules">Edit Modules</button>
+            </div>
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Tools</th>
+                  <th>Description</th>
+                  <th style="width: 110px;">State</th>
+                </tr>
+              </thead>
+              <tbody id="overview-modules-body"></tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Detected AI Clients</h2>
+              <button class="btn btn-quiet btn-sm" data-jump="clients">Manage Clients</button>
+            </div>
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Config Path</th>
+                  <th style="width: 130px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="overview-clients-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- MCP MODULES -->
+        <section class="view" id="view-modules">
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">dev-context-mcp</div>
+              <h1>MCP Modules</h1>
+              <p>Enable only the modules you need to keep your assistant's upfront schema token count low.</p>
+            </div>
+            <button class="btn" data-jump="clients">Apply to AI Clients</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Module Selection</h2>
+              <span class="hint" id="mod-summary-hint">-</span>
+            </div>
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th style="width: 64px;">On</th>
+                  <th style="width: 220px;">Module</th>
+                  <th>Capabilities</th>
+                  <th style="width: 80px;">Tools</th>
+                </tr>
+              </thead>
+              <tbody id="modules-table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Optional Environment</h2>
+              <span class="hint">Written into client config when connecting</span>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="input-db-url">DATABASE_URL (read-only db module)</label>
+                  <input id="input-db-url" type="text" placeholder="postgres://user:pass@localhost:5432/mydb" />
+                </div>
+                <div class="field">
+                  <label for="input-repo-root">REPO_ROOT (default for Claude Desktop)</label>
+                  <input id="input-repo-root" type="text" placeholder="/path/to/your/project" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI CLIENTS -->
+        <section class="view" id="view-clients">
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">One-Click Installer</div>
+              <h1>AI Clients</h1>
+              <p>Safely merges <span class="mono">dev-context</span> into each client's JSON config without touching your other servers.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th style="width: 190px;">Client</th>
+                  <th>Config Path &amp; Active Modules</th>
+                  <th style="width: 130px;">Status</th>
+                  <th style="width: 200px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clients-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- CONFIG JSON -->
+        <section class="view" id="view-config">
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Manual Setup</div>
+              <h1>Config JSON</h1>
+              <p>Live configuration generated from your current module selection.</p>
+            </div>
+            <button class="btn" id="btn-copy-snippet">Copy JSON</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>mcpServers Snippet</h2>
+              <span class="hint mono" id="entry-path-hint">-</span>
+            </div>
+            <div class="panel-body">
+              <pre id="config-snippet">{}</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- CLI TOOLS -->
+        <section class="view" id="view-clis">
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Unified CLI</div>
+              <h1>CLI Tools</h1>
+              <p>Every standalone utility is available through <span class="mono">toolshed &lt;tool&gt;</span>.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th style="width: 170px;">Tool</th>
+                  <th>Description &amp; Example</th>
+                  <th style="width: 110px;">Status</th>
+                  <th style="width: 185px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cli-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-head">
+        <strong id="modal-title">Output</strong>
+        <button class="btn btn-quiet btn-sm" id="btn-close-modal">Close</button>
+      </div>
+      <div class="modal-body">
+        <pre id="modal-body"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let state = null;
+    const selectedModules = new Set();
+    const VIEW_TITLES = {
+      overview: "Overview",
+      modules: "MCP Modules",
+      clients: "AI Clients",
+      config: "Config JSON",
+      clis: "CLI Tools",
+    };
+
+    function switchView(id) {
+      document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
+      document.querySelectorAll(".side-link").forEach((el) => el.classList.remove("active"));
+      const target = document.getElementById("view-" + id);
+      if (target) target.classList.add("active");
+      const nav = document.querySelector(`.side-link[data-view="${id}"]`);
+      if (nav) nav.classList.add("active");
+      document.getElementById("topbar-title").textContent = VIEW_TITLES[id] || "toolshed";
+    }
+
+    document.querySelectorAll(".side-link[data-view]").forEach((btn) => {
+      btn.onclick = () => switchView(btn.dataset.view);
+    });
+    document.querySelectorAll("[data-jump]").forEach((btn) => {
+      btn.onclick = () => switchView(btn.dataset.jump);
+    });
+
+    // Theme toggle (Dark / Light matching ai-harness-oss)
+    const themeBtn = document.getElementById("btn-theme");
+    function setTheme(t) {
+      document.documentElement.setAttribute("data-theme", t);
+      themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+      try { localStorage.setItem("toolshed-theme", t); } catch {}
+    }
+    try {
+      const saved = localStorage.getItem("toolshed-theme");
+      if (saved === "light" || saved === "dark") setTheme(saved);
+    } catch {}
+    themeBtn.onclick = () => {
+      const cur = document.documentElement.getAttribute("data-theme") || "dark";
+      setTheme(cur === "dark" ? "light" : "dark");
+    };
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 3200);
+    }
+
+    function openModal(title, text) {
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal-body").textContent = text || "(no output)";
+      document.getElementById("modal").classList.add("show");
+    }
+
+    document.getElementById("btn-close-modal").onclick = () => {
+      document.getElementById("modal").classList.remove("show");
+    };
+    document.getElementById("modal").onclick = (e) => {
+      if (e.target.id === "modal") document.getElementById("modal").classList.remove("show");
+    };
+
+    async function api(path, body) {
+      const res = await fetch(path, body ? {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      } : undefined);
+      const data = await res.json();
+      if (!res.ok && !data.ok) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    function getSelectionPayload() {
+      return {
+        modules: [...selectedModules],
+        databaseUrl: document.getElementById("input-db-url").value.trim(),
+        repoRoot: document.getElementById("input-repo-root").value.trim(),
+      };
+    }
+
+    async function updateSnippet() {
+      if (!state) return;
+      const res = await api("/api/preview-config", getSelectionPayload());
+      document.getElementById("config-snippet").textContent = JSON.stringify(res.snippet, null, 2);
+
+      let toolCount = 0;
+      for (const m of state.modules) {
+        if (selectedModules.has(m.id)) toolCount += m.toolCount;
+      }
+      const approxTokens = (toolCount * 95).toLocaleString();
+      document.getElementById("stat-tools").textContent = String(toolCount);
+      document.getElementById("stat-tokens").textContent = `~${approxTokens} schema tokens`;
+      document.getElementById("mod-summary-hint").textContent = `${selectedModules.size} of ${state.modules.length} modules enabled (${toolCount} tools, ~${approxTokens} tokens)`;
+      document.getElementById("nav-mod-count").textContent = `${selectedModules.size}/${state.modules.length}`;
+    }
+
+    function render() {
+      const { install, modules, clients, mcpEntry } = state;
+
+      const statusEl = document.getElementById("mcp-status");
+      statusEl.textContent = install.mcp.ready ? "MCP Ready" : "Needs Build";
+      statusEl.className = "status " + (install.mcp.ready ? "ok" : "warn");
+
+      document.getElementById("stat-mcp").textContent = install.mcp.ready ? "Ready" : "Not Built";
+      const connectedCount = clients.filter((c) => c.connected).length;
+      document.getElementById("stat-clients").textContent = `${connectedCount} / ${clients.length}`;
+      document.getElementById("stat-clis").textContent = String(install.cliTools.length);
+      document.getElementById("nav-client-count").textContent = `${connectedCount}/${clients.length}`;
+      document.getElementById("nav-cli-count").textContent = String(install.cliTools.length);
+      document.getElementById("entry-path-hint").textContent = mcpEntry;
+
+      // Overview: Modules table
+      const ovMods = document.getElementById("overview-modules-body");
+      ovMods.innerHTML = "";
+      for (const m of modules) {
+        const on = selectedModules.has(m.id);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${m.name}</strong> <span class="mono faint">${m.id}</span></td>
+          <td class="mono">${m.toolCount}</td>
+          <td class="muted">${m.description}</td>
+          <td><span class="status ${on ? "ok" : ""}">${on ? "Enabled" : "Disabled"}</span></td>
+        `;
+        ovMods.appendChild(tr);
+      }
+
+      // Overview: Clients table
+      const ovClients = document.getElementById("overview-clients-body");
+      ovClients.innerHTML = "";
+      for (const c of clients) {
+        const tr = document.createElement("tr");
+        const stClass = c.connected ? "ok" : c.detected ? "warn" : "";
+        const stLabel = c.connected ? "Connected" : c.detected ? "Detected" : "Not found";
+        tr.innerHTML = `
+          <td><strong>${c.name}</strong></td>
+          <td class="mono muted">${c.configPath}</td>
+          <td><span class="status ${stClass}">${stLabel}</span></td>
+        `;
+        ovClients.appendChild(tr);
+      }
+
+      // Modules table
+      const modBody = document.getElementById("modules-table-body");
+      modBody.innerHTML = "";
+      for (const m of modules) {
+        const on = selectedModules.has(m.id);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <label class="switch">
+              <input type="checkbox" ${on ? "checked" : ""} />
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td>
+            <div><strong>${m.name}</strong></div>
+            <div class="mono faint">${m.id}${m.requiresEnv ? " - needs " + m.requiresEnv : ""}</div>
+          </td>
+          <td>
+            <div class="muted">${m.description}</div>
+            <details>
+              <summary>Inspect ${m.tools.length} tools</summary>
+              <div class="tool-list">${m.tools.map((t) => `<span class="tool-chip">${t}</span>`).join("")}</div>
+            </details>
+          </td>
+          <td class="mono">${m.toolCount}</td>
+        `;
+        tr.querySelector("input").onchange = (e) => {
+          if (e.target.checked) selectedModules.add(m.id);
+          else selectedModules.delete(m.id);
+          render();
+          updateSnippet();
+        };
+        modBody.appendChild(tr);
+      }
+
+      // Clients table
+      const clientBody = document.getElementById("clients-table-body");
+      clientBody.innerHTML = "";
+      for (const c of clients) {
+        const tr = document.createElement("tr");
+        const stClass = c.parseError ? "err" : c.connected ? "ok" : c.detected ? "warn" : "";
+        const stLabel = c.parseError ? "JSON Error" : c.connected ? "Connected" : c.detected ? "Detected" : "Not found";
+        const modsNote = c.configuredModules
+          ? `<div class="muted" style="font-size:12px; margin-top:3px;">Modules: <span class="mono">${c.configuredModules.join(", ")}</span></div>`
+          : "";
+        tr.innerHTML = `
+          <td>
+            <div><strong>${c.name}</strong></div>
+            <div class="faint" style="font-size:12px;">${c.scope} scope</div>
+          </td>
+          <td>
+            <div class="mono muted" style="word-break:break-all;">${c.configPath}</div>
+            ${modsNote}
+            ${c.parseError ? `<div style="color:var(--red); font-size:12px; margin-top:3px;">${c.parseError}</div>` : ""}
+          </td>
+          <td><span class="status ${stClass}">${stLabel}</span></td>
+          <td style="text-align:right;">
+            <div class="row" style="justify-content:flex-end;">
+              <button class="btn btn-sm" data-connect="${c.id}">${c.connected ? "Update" : "Connect"}</button>
+              ${c.connected ? `<button class="btn btn-danger btn-sm" data-disconnect="${c.id}">Disconnect</button>` : ""}
+            </div>
+          </td>
+        `;
+        tr.querySelector("[data-connect]").onclick = async (e) => {
+          const btn = e.target;
+          btn.disabled = true;
+          btn.textContent = "Saving...";
+          try {
+            const res = await api("/api/connect", { clientId: c.id, ...getSelectionPayload() });
+            state.clients = res.clients;
+            state.install = res.install;
+            render();
+            showToast(`Connected ${c.name}. Restart your assistant to apply.`);
+          } catch (err) {
+            showToast("Error: " + err.message);
+            btn.disabled = false;
+            btn.textContent = c.connected ? "Update" : "Connect";
+          }
+        };
+        const disc = tr.querySelector("[data-disconnect]");
+        if (disc) {
+          disc.onclick = async () => {
+            try {
+              const res = await api("/api/disconnect", { clientId: c.id });
+              state.clients = res.clients;
+              render();
+              showToast(`Disconnected ${c.name}.`);
+            } catch (err) {
+              showToast("Error: " + err.message);
+            }
+          };
+        }
+        clientBody.appendChild(tr);
+      }
+
+      // CLIs table
+      const cliBody = document.getElementById("cli-table-body");
+      cliBody.innerHTML = "";
+      for (const t of install.cliTools) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <div class="mono"><strong>${t.name}</strong></div>
+            <div class="faint" style="font-size:12px;">${t.category}</div>
+          </td>
+          <td>
+            <div class="muted">${t.description}</div>
+            <div class="mono faint" style="margin-top:4px;">${t.example}</div>
+          </td>
+          <td><span class="status ${t.ready ? "ok" : "warn"}">${t.ready ? "Ready" : "Install"}</span></td>
+          <td style="text-align:right;">
+            <div class="row" style="justify-content:flex-end;">
+              <button class="btn btn-quiet btn-sm" data-copy="${t.example}">Copy</button>
+              <button class="btn btn-quiet btn-sm" data-help="${t.id}">--help</button>
+              ${!t.ready ? `<button class="btn btn-sm" data-install-cli="${t.id}">Install</button>` : ""}
+            </div>
+          </td>
+        `;
+        tr.querySelector("[data-copy]").onclick = () => {
+          navigator.clipboard?.writeText(t.example);
+          showToast("Copied command.");
+        };
+        tr.querySelector("[data-help]").onclick = async () => {
+          try {
+            const res = await api("/api/run-cli-help", { toolId: t.id });
+            openModal(`${t.name} --help`, res.output);
+          } catch (err) {
+            showToast("Error: " + err.message);
+          }
+        };
+        const instBtn = tr.querySelector("[data-install-cli]");
+        if (instBtn) {
+          instBtn.onclick = async () => {
+            instBtn.disabled = true;
+            instBtn.textContent = "Installing...";
+            try {
+              const res = await api("/api/install-cli", { toolId: t.id });
+              state.install = res.install;
+              render();
+              showToast(`Installed dependencies for ${t.name}.`);
+            } catch (err) {
+              showToast("Error: " + err.message);
+              instBtn.disabled = false;
+              instBtn.textContent = "Install";
+            }
+          };
+        }
+        cliBody.appendChild(tr);
+      }
+    }
+
+    async function load() {
+      state = await api("/api/state");
+      if (selectedModules.size === 0) {
+        for (const m of state.modules) {
+          if (m.defaultEnabled) selectedModules.add(m.id);
+        }
+      }
+      if (!document.getElementById("input-repo-root").value) {
+        document.getElementById("input-repo-root").value = state.cwd;
+      }
+      render();
+      await updateSnippet();
+    }
+
+    document.getElementById("input-db-url").oninput = updateSnippet;
+    document.getElementById("input-repo-root").oninput = updateSnippet;
+    document.getElementById("btn-refresh").onclick = () => load().then(() => showToast("Refreshed."));
+    document.getElementById("btn-copy-snippet").onclick = () => {
+      navigator.clipboard?.writeText(document.getElementById("config-snippet").textContent);
+      showToast("Copied JSON config.");
+    };
+    document.getElementById("btn-rebuild").onclick = async (e) => {
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = "Building...";
+      try {
+        const res = await api("/api/build-mcp", { force: true });
+        state.install = res.install;
+        render();
+        showToast("dev-context-mcp rebuilt.");
+      } catch (err) {
+        openModal("Build Output", err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Rebuild MCP";
+      }
+    };
+
+    load();
+  </script>
+</body>
+</html>
