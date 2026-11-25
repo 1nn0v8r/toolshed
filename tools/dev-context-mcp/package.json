@@ -47,7 +47,7 @@
     "url": "https://github.com/1nn0v8r/toolshed/issues"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "express": "^5.2.1",
     "fast-glob": "^3.3.3",
     "mysql2": "^3.24.6",
