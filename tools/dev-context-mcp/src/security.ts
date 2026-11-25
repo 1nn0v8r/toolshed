@@ -11,6 +11,7 @@
 // session has that tier enabled.
 
 import path from "node:path";
+import type { ModuleName } from "./modules.js";
 
 export type Capability = "read" | "write" | "exec" | "admin" | "web";
 
@@ -21,6 +22,8 @@ export interface Session {
   root: string;
   /** Capability tiers enabled for this session. */
   caps: Set<Capability>;
+  /** Enabled tool modules for this session. */
+  modules: Set<ModuleName>;
   /** stdio/local, dangerous tiers enabled without flags, set_repo_root unconfined. */
   fullPower: boolean;
   /** When set (hardened mode), set_repo_root targets are confined under this dir. */
@@ -54,6 +57,29 @@ export const TOOL_CAPS: Record<string, Capability> = {
   get_git_status: "read",
   get_recent_changes: "read",
   get_env_vars: "read",
+  // -- git-history module (read-only git inspection) --
+  file_history: "read",
+  blame_range: "read",
+  line_origin: "read",
+  commit_details: "read",
+  search_commits: "read",
+  churn: "read",
+  contributors: "read",
+  // -- diagnostics module --
+  trim_diagnostics: "read",
+  check_diagnostics: "exec",
+  // -- test-report module --
+  detect_test_runner: "read",
+  parse_report: "read",
+  list_failures_from_last_run: "read",
+  run_tests: "exec",
+  // -- db module (read-only guarded SELECT and schema inspection) --
+  list_tables: "read",
+  describe_table: "read",
+  list_relationships: "read",
+  sample_rows: "read",
+  run_select: "read",
+  connection_info: "read",
   // ── web: reach the network (SSRF-guarded in hardened mode) ──
   fetch_url: "web",
   web_search: "web",

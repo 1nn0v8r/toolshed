@@ -7,6 +7,11 @@
 
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { getWebToolDefinitions } from "./web.js";
+import {
+  getExtensionToolDefinitions,
+  DEFAULT_MODULES,
+  type ModuleName,
+} from "./modules.js";
 
 const moduleArg = {
   module: {
@@ -434,6 +439,11 @@ const coreTools: Tool[] = [
   },
 ];
 
-export function getToolDefinitions(): Tool[] {
-  return [...coreTools, ...getWebToolDefinitions()];
+export function getToolDefinitions(enabledModules?: Set<ModuleName>): Tool[] {
+  const mods = enabledModules ?? new Set<ModuleName>(DEFAULT_MODULES);
+  const tools: Tool[] = [];
+  if (mods.has("core")) tools.push(...coreTools);
+  if (mods.has("web")) tools.push(...getWebToolDefinitions());
+  tools.push(...getExtensionToolDefinitions(mods));
+  return tools;
 }

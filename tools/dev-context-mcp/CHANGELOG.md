@@ -2,6 +2,17 @@
 
 All notable changes to dev-context-mcp. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Added
+- Consolidated `git-history`, `diagnostics`, `test-report`, and opt-in `db` (read-only PostgreSQL/MySQL) modules directly into `dev-context-mcp`.
+- Toggleable module loading via `MCP_MODULES`, `MCP_DISABLED_MODULES`, `--modules=...`, and `--disable-modules=...` (with `db` auto-enabled when `DATABASE_URL` is set).
+- Consolidated module test suites and smoke tests.
+
+### Changed
+- Bumped version to `4.0.0` to reflect the unified modular MCP architecture.
+- Updated `Dockerfile` to copy `modules/` and include `git` for git-history tools.
+
 ## 3.1.0 - 2026-11-17
 
 ### Added
