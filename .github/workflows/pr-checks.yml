@@ -86,9 +86,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           SKIP: ${{ contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
         run: |
           set -euo pipefail
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            echo "Dependabot pull request, no changelog entry required."
+            exit 0
+          fi
           if [ "$SKIP" = "true" ]; then
             echo "Label skip-changelog is set, not checking."
             exit 0
