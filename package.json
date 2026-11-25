@@ -1,0 +1,27 @@
+{
+  "name": "toolshed",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Unified CLI, interactive setup, local Web UI, and consolidated dev-context MCP server for faster, leaner AI-assisted coding.",
+  "bin": {
+    "toolshed": "bin/toolshed.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup": "node bin/toolshed.js setup",
+    "ui": "node bin/toolshed.js ui",
+    "status": "node bin/toolshed.js status",
+    "test": "node --test test/toolshed.test.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  }
+}

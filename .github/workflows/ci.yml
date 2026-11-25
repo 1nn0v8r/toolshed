@@ -168,26 +168,37 @@ jobs:
       - run: npm ci
       - run: node --test test/db-schema/integration.test.js
 
+  root-cli:
+    name: toolshed root CLI & UI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - run: npm test
+
   # The single required check for tool tests. It fails when change detection
   # fails, passes when nothing changed, and otherwise needs every test job to pass.
   ci:
     name: ci
-    needs: [changes, test-linux, test-hosted, integration]
+    needs: [changes, root-cli, test-linux, test-hosted, integration]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Summarize
         env:
           R_CHANGES: ${{ needs.changes.result }}
+          R_ROOT: ${{ needs.root-cli.result }}
           R_LINUX: ${{ needs.test-linux.result }}
           R_HOSTED: ${{ needs.test-hosted.result }}
           R_INT: ${{ needs.integration.result }}
           TOOLS: ${{ needs.changes.outputs.tools }}
         run: |
-          echo "changes: $R_CHANGES, tools: $TOOLS"
+          echo "changes: $R_CHANGES, root: $R_ROOT, tools: $TOOLS"
           echo "linux: $R_LINUX, hosted: $R_HOSTED, integration: $R_INT"
-          if [ "$R_CHANGES" != "success" ]; then
-            echo "::error::Change detection failed, so no tests ran."
+          if [ "$R_CHANGES" != "success" ] || [ "$R_ROOT" != "success" ]; then
+            echo "::error::Change detection or root CLI tests failed."
             exit 1
           fi
           if [ "$TOOLS" = "[]" ]; then exit 0; fi
