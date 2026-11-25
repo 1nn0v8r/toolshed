@@ -2,7 +2,28 @@
 
 The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is an open standard that lets AI assistants call external tools. An MCP server exposes tools, such as "search this repo" or "read these files", and the assistant decides when to call them.
 
-This guide explains how to register any stdio MCP server, such as [dev-context-mcp](../tools/dev-context-mcp), with common assistants. Each tool's README gives its exact command.
+This guide explains how to register [dev-context-mcp](../tools/dev-context-mcp) with common AI coding assistants.
+
+## Fastest way: use the visual UI or CLI installer
+
+From the root of the `toolshed` repository:
+
+```bash
+# Visual Web UI dashboard (toggle modules & connect clients with one click)
+npm run ui
+
+# Or interactive CLI wizard
+npm run setup
+```
+
+Both tools build `dev-context-mcp` automatically and safely merge the `dev-context` entry into your client's JSON config while keeping your other MCP servers intact.
+
+## Choosing modules (controlling token cost)
+
+`dev-context-mcp` consolidates all dev MCP capabilities into one server with 6 toggleable modules: `core`, `git-history`, `diagnostics`, `test-report`, `web`, and `db` (auto-enabled when `DATABASE_URL` is set).
+
+- `MCP_MODULES=core,git-history,diagnostics,test-report` enables only those modules.
+- `MCP_DISABLED_MODULES=web` disables specific modules.
 
 ## How a stdio server runs
 
