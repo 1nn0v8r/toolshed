@@ -4,7 +4,7 @@ A zero-dependency CLI and git pre-commit hook that blocks commits containing sec
 
 - **Runs on:** Windows (Git Bash), macOS and Linux
 - **Requires:** Node.js 20 or newer, and git on `PATH`
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

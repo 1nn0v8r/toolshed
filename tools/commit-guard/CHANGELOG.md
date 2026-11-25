@@ -4,6 +4,9 @@ All notable changes to commit-guard. Versions follow [Semantic Versioning](https
 
 ## Unreleased
 
+### Changed
+- Relicensed from MIT to GNU AGPL-3.0-only.
+
 ### Added
 - `--fix` flag on `commit-guard check` to automatically replace em dash, en dash and ellipsis characters with ASCII equivalents in place, re-staging modified files when checking staged changes.
 

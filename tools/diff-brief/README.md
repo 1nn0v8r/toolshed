@@ -4,7 +4,7 @@ Summarize sprawling git diffs and pull requests into token-compact review briefs
 
 - **Runs on:** Windows, macOS, Linux
 - **Requires:** Node.js 20 or newer, `git` on `PATH` (optional when using `--diff-file` or `--stdin`)
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

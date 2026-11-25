@@ -6,7 +6,7 @@ Every tool returns **compact, capped output**, so your assistant spends fewer to
 
 - **Runs on:** Windows, macOS and Linux (Node.js 20 or newer)
 - **Transports:** stdio (local, default) or Streamable HTTP (hardened, for containers and shared servers)
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

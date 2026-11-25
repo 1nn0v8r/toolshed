@@ -4,7 +4,7 @@ A command line tool that bundles chosen files of a project into one prompt-ready
 
 - **Runs on:** Windows, macOS and Linux
 - **Requires:** Node.js 20 or newer (git is optional, used when available)
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

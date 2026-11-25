@@ -2,7 +2,7 @@
 
 All notable changes to dev-context-mcp. Versions follow [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 4.0.0 - 2026-11-25
 
 ### Added
 - Consolidated `git-history`, `diagnostics`, `test-report`, and opt-in `db` (read-only PostgreSQL/MySQL) modules directly into `dev-context-mcp`.
@@ -12,6 +12,7 @@ All notable changes to dev-context-mcp. Versions follow [Semantic Versioning](ht
 ### Changed
 - Bumped version to `4.0.0` to reflect the unified modular MCP architecture.
 - Updated `Dockerfile` to copy `modules/` and include `git` for git-history tools.
+- Relicensed from MIT to GNU AGPL-3.0-only.
 
 ## 3.1.0 - 2026-11-17
 

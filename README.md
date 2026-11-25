@@ -6,7 +6,7 @@
 
 Open source developer tools for faster, leaner, AI-assisted coding.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![CI](https://github.com/1nn0v8r/toolshed/actions/workflows/ci.yml/badge.svg)](https://github.com/1nn0v8r/toolshed/actions/workflows/ci.yml)
 [![Repo checks](https://github.com/1nn0v8r/toolshed/actions/workflows/repo-checks.yml/badge.svg)](https://github.com/1nn0v8r/toolshed/actions/workflows/repo-checks.yml)
 ![Node.js >= 20](https://img.shields.io/badge/node-%3E%3D20-339933.svg)
@@ -119,11 +119,29 @@ cd toolshed
 
 ### Option 1: Visual Web UI installer (recommended)
 
-Launch the zero-dependency local dashboard to toggle MCP modules, connect your AI clients with one click, and browse CLI tools:
+Launch the zero-dependency local dashboard (`http://127.0.0.1:4317`) to toggle MCP modules, connect your AI clients with one click, and browse CLI tools:
 
 ```bash
 npm run ui
 ```
+
+<p align="center">
+  <img src="docs/images/ui-overview.png" alt="toolshed Web UI Overview showing unified dev-context-mcp status, active tool count, and module summary" width="100%">
+</p>
+
+<details>
+<summary>More screenshots: MCP Modules, AI Clients, and CLI Tools</summary>
+
+<p><strong>Toggleable MCP Modules</strong> (control upfront schema token cost)</p>
+<img src="docs/images/ui-modules.png" alt="toolshed Web UI MCP Modules toggles" width="100%">
+
+<p><strong>One-Click AI Client Installer</strong> (Antigravity, Claude Code, Claude Desktop, OpenAI Codex CLI, Cursor, Gemini CLI, Windsurf, VS Code, Project .mcp.json, Cline, Roo Code, Zed)</p>
+<img src="docs/images/ui-clients.png" alt="toolshed Web UI AI Clients installer" width="100%">
+
+<p><strong>Unified CLI Utilities</strong></p>
+<img src="docs/images/ui-clis.png" alt="toolshed Web UI CLI Tools explorer" width="100%">
+
+</details>
 
 ### Option 2: Interactive CLI setup
 
@@ -146,7 +164,15 @@ toolshed mcp-audit --max-tokens 8000
 toolshed commit-guard check --staged
 ```
 
-### Option 3: Manual MCP registration
+### Option 3: Docker Compose stack
+
+Run both the Web UI (`http://127.0.0.1:4317`) and the unified `dev-context-mcp` HTTP server (`http://127.0.0.1:4318/mcp`) in containers:
+
+```bash
+docker compose up -d --build
+```
+
+### Option 4: Manual MCP registration
 
 You can also build and register [`dev-context-mcp`](tools/dev-context-mcp) manually - see [Using MCP servers](docs/using-mcp-servers.md) or [dev-context-mcp](tools/dev-context-mcp#connect-your-assistant).
 
@@ -284,4 +310,4 @@ To report a security problem, follow the [security policy](SECURITY.md) instead 
 
 ## License
 
-[MIT](LICENSE). Use, modify, and share these tools freely.
+[AGPL-3.0](LICENSE). Use, modify, and share these tools freely.

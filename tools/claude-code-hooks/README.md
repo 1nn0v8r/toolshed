@@ -4,7 +4,7 @@ A pack of safety and quality hooks for [Claude Code](https://docs.claude.com/en/
 
 - **Runs on:** Windows, macOS and Linux
 - **Requires:** Node.js 20 or newer (no runtime dependencies)
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

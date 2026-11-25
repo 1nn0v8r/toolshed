@@ -4,7 +4,7 @@ A zero-dependency CLI that keeps AI coding assistant instruction files (`AGENTS.
 
 - **Runs on:** Windows, macOS and Linux
 - **Requires:** Node.js 20 or newer
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

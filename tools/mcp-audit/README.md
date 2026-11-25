@@ -4,7 +4,7 @@ A fast, zero-dependency CLI that audits MCP servers and client configs for upfro
 
 - **Runs on:** Windows, macOS and Linux
 - **Requires:** Node.js 20 or newer
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

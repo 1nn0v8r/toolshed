@@ -1,6 +1,9 @@
-# Creates a GitHub release when a per-tool tag is pushed, e.g. repo-pack@0.1.0.
-# Checks that the tool exists, that package.json has the same version, and that
-# CHANGELOG.md has a "## <version>" section, whose body becomes the release notes.
+# Creates a GitHub Release with npm tarball (.tgz) and (for root toolshed releases)
+# a Docker image published to GitHub Container Registry (ghcr.io).
+#
+# Supported tags:
+#   - toolshed@1.0.0 or v1.0.0   -> root toolshed release (.tgz + ghcr.io Docker image)
+#   - <tool>@<version>           -> per-tool release (e.g. dev-context-mcp@4.0.0, .tgz attached)
 
 name: release
 
@@ -8,9 +11,11 @@ on:
   push:
     tags:
       - "*@*"
+      - "v*"
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -18,29 +23,46 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
       - name: Parse tag
         id: tag
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          tool="${TAG%@*}"
-          version="${TAG##*@}"
-          if [ ! -d "tools/$tool" ]; then
-            echo "::error::No folder tools/$tool for tag $TAG"
-            exit 1
+          if [[ "$TAG" == v* ]]; then
+            echo "kind=root" >> "$GITHUB_OUTPUT"
+            echo "tool=toolshed" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == toolshed@* ]]; then
+            echo "kind=root" >> "$GITHUB_OUTPUT"
+            echo "tool=toolshed" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#toolshed@}" >> "$GITHUB_OUTPUT"
+          else
+            tool="${TAG%@*}"
+            version="${TAG##*@}"
+            if [ ! -d "tools/$tool" ]; then
+              echo "::error::No folder tools/$tool for tag $TAG"
+              exit 1
+            fi
+            echo "kind=tool" >> "$GITHUB_OUTPUT"
+            echo "tool=$tool" >> "$GITHUB_OUTPUT"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
           fi
-          echo "tool=$tool" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Check version and extract notes
         env:
+          KIND: ${{ steps.tag.outputs.kind }}
           TOOL: ${{ steps.tag.outputs.tool }}
           VERSION: ${{ steps.tag.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
           node - <<'EOF'
           const fs = require("fs");
-          const { TOOL, VERSION } = process.env;
-          const dir = `tools/${TOOL}`;
+          const { KIND, TOOL, VERSION, REPO } = process.env;
+          const dir = KIND === "root" ? "." : `tools/${TOOL}`;
           const pkgPath = `${dir}/package.json`;
           if (fs.existsSync(pkgPath)) {
             const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
@@ -58,14 +80,63 @@ jobs:
           }
           let end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
           if (end === -1) end = lines.length;
-          const notes = lines.slice(start + 1, end).join("\n").trim();
+          let notes = lines.slice(start + 1, end).join("\n").trim();
+          const ownerLower = REPO.toLowerCase();
+          if (KIND === "root") {
+            notes += `\n\n### Install\n- **npm tarball:** Download the attached \`.tgz\` and run \`npm install -g ./toolshed-${VERSION}.tgz\`\n- **Docker (GHCR):** \`docker pull ghcr.io/${ownerLower}:${VERSION}\`\n`;
+          } else {
+            notes += `\n\n### Install\n- **npm tarball:** Download the attached \`.tgz\` and run \`npm install -g ./${TOOL}-${VERSION}.tgz\`\n`;
+          }
           fs.writeFileSync("release-notes.md", notes + "\n");
           EOF
 
-      - name: Create release
+      - name: Build and pack tarball
+        id: pack
+        env:
+          KIND: ${{ steps.tag.outputs.kind }}
+          TOOL: ${{ steps.tag.outputs.tool }}
+        run: |
+          if [ "$KIND" = "root" ]; then
+            npm --prefix tools/dev-context-mcp ci --ignore-scripts
+            npm --prefix tools/dev-context-mcp run build
+            tgz=$(npm pack --silent | tail -n 1)
+            echo "tarball=$tgz" >> "$GITHUB_OUTPUT"
+          else
+            cd "tools/$TOOL"
+            if [ -f package-lock.json ]; then
+              npm ci --ignore-scripts
+            fi
+            if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1)"; then
+              npm run build
+            fi
+            tgz=$(npm pack --silent | tail -n 1)
+            echo "tarball=tools/$TOOL/$tgz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to GitHub Container Registry
+        if: steps.tag.outputs.kind == 'root'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image to GHCR
+        if: steps.tag.outputs.kind == 'root'
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          IMAGE="ghcr.io/$(echo "$REPO" | tr '[:upper:]' '[:lower:]')"
+          docker build -t "${IMAGE}:${VERSION}" -t "${IMAGE}:latest" .
+          docker push "${IMAGE}:${VERSION}"
+          docker push "${IMAGE}:latest"
+
+      - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
           TOOL: ${{ steps.tag.outputs.tool }}
           VERSION: ${{ steps.tag.outputs.version }}
-        run: gh release create "$TAG" --title "$TOOL $VERSION" --notes-file release-notes.md --verify-tag
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+        run: gh release create "$TAG" "$TARBALL" --title "$TOOL $VERSION" --notes-file release-notes.md --verify-tag
