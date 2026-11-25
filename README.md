@@ -108,7 +108,28 @@ Status values: Experimental, Beta, Stable, Deprecated.
 
 ## Quick start
 
-**Prerequisites:** [Node.js 20+](https://nodejs.org) (and `git` for git-aware tools).
+**Prerequisites:** [Node.js 20+](https://nodejs.org) (and `git` for git-aware tools), or Docker.
+
+### Fastest: Install in one command (no clone required)
+
+**With Node.js (recommended for one-click local AI client setup):**
+
+```bash
+npm install -g https://github.com/1nn0v8r/toolshed/releases/download/toolshed%401.0.0/toolshed-1.0.0.tgz
+toolshed ui
+```
+
+**With Docker (GHCR):**
+
+```bash
+docker run --rm -p 127.0.0.1:4317:4317 ghcr.io/1nn0v8r/toolshed:latest
+```
+
+Then open **http://127.0.0.1:4317** in your browser.
+
+---
+
+### From source
 
 Clone the repository once:
 
