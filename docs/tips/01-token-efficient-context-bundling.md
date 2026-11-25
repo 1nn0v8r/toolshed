@@ -41,7 +41,7 @@ node tools/repo-pack/src/cli.js \
 
 ## 3. Strip Test Noise on Failure
 
-When asking an assistant to fix broken tests, don't paste thousands of lines of passing test logs. Use `test-report-mcp` or pipe only failed assertions:
+When asking an assistant to fix broken tests, don't paste thousands of lines of passing test logs. Use `dev-context-mcp`'s `test-report` module or pipe only failed assertions:
 
 - Filter to only failing test names, line numbers, and trimmed error traces.
 - This saves 80-90% of tokens in test-debugging loops and prevents the assistant from hallucinating fixes for passing tests.
