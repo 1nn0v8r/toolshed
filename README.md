@@ -41,30 +41,32 @@ AI coding assistants are great until the plumbing gets in the way:
 - **Multi-assistant repos drift.** Teams juggling `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, Cursor rules, and Copilot instructions end up with contradictory rules and broken file references.
 - **Guardrails belong in deterministic code, not prompts.** Blocking leaked secrets, `.env` files, personal paths, and destructive shell commands should happen automatically via hooks and CLIs, not by hoping an agent remembers a rule.
 
-**toolshed** is a collection of 15 standalone, cross-platform tools built around those problems:
+**toolshed** is a unified developer toolkit built around those problems:
 
-- **Token-first output:** MCP servers and CLIs cap, deduplicate, and summarize output so assistants get high-signal answers for a fraction of the tokens.
-- **Zero-bloat engineering:** 9 of the 15 tools have **zero runtime dependencies** and run directly with `node`; the rest use minimal dependencies.
-- **Completely standalone:** Every tool lives in its own folder under [`tools/`](tools) with its own README, tests, changelog, and semantic version. Use one tool or combine several.
+- **One MCP server, toggleable modules:** [`dev-context-mcp`](tools/dev-context-mcp) bundles repo search/read/edit, git history & blame, deduplicated diagnostics, failure-only test reporting, web browsing, and optional read-only DB inspection into a single MCP server. Enable only the modules you want.
+- **Visual Web UI + interactive CLI installer:** Run `npm run ui` (`toolshed ui`) to toggle modules, connect Claude Code, Claude Desktop, Cursor, VS Code, Windsurf, or Gemini CLI with one click, and browse CLI tools visually - or run `npm run setup` (`toolshed setup`) in your terminal.
+- **One CLI command for everything:** Install once (`npm install -g .`) to run `toolshed ui`, `toolshed setup`, `toolshed mcp`, and any standalone CLI (`toolshed diff-brief`, `toolshed mcp-audit`, `toolshed commit-guard`, etc.).
+- **Zero-bloat engineering:** The root `toolshed` CLI/UI and 9 of the 10 standalone CLIs have **zero runtime dependencies** and run directly with `node`.
 - **Tested on Windows, macOS, and Linux** across Node.js 20 and 22 in [CI](.github/workflows/ci.yml).
 
 ---
 
 ## Tools
 
-All 15 tools support **Windows, macOS, and Linux** and require **Node.js 20+**.
+All tools support **Windows, macOS, and Linux** and require **Node.js 20+**.
 
-### MCP servers for AI assistants
+### Unified MCP server for AI assistants
 
-Give Claude Code, Cursor, VS Code, or any MCP client token-capped, high-signal tools instead of raw shell dumps.
+Configure **one** MCP server ([dev-context-mcp](tools/dev-context-mcp), Stable 4.0.0) and toggle the modules you need via `toolshed ui`, `toolshed setup`, or `MCP_MODULES`:
 
-| Tool | What it does | Type | Runtime deps | Status |
-|---|---|---|---|---|
-| [db-schema-mcp](tools/db-schema-mcp) | Read-only schema inspection and guarded SELECT queries for PostgreSQL and MySQL. | MCP server | Minimal | Beta (0.1.0) |
-| [dev-context-mcp](tools/dev-context-mcp) | Token-capped toolset for searching, reading and editing code, git, quality checks, and the web. | MCP server | Minimal | Stable (3.1.0) |
-| [diagnostics-trim-mcp](tools/diagnostics-trim-mcp) | Runs project typecheckers and linters, returning token-compact, deduplicated diagnostics. | MCP server, CLI | Minimal | Beta (0.1.0) |
-| [git-history-mcp](tools/git-history-mcp) | Answers "why is this code like this?" from git history: file history, grouped blame, line origin, and churn. | MCP server | Minimal | Beta (0.1.0) |
-| [test-report-mcp](tools/test-report-mcp) | Runs your tests and returns only the failures: names, file:line, message, and a trimmed stack. | MCP server | Minimal | Beta (0.1.0) |
+| Module | What it does | Default |
+|---|---|---|
+| `core` | Repo orientation, capped file search/read/edit, git status, scripts, and shell. | ON |
+| `git-history` | File history, grouped blame, line origin, commit search (pickaxe), churn, and contributors. | ON |
+| `diagnostics` | Runs project typecheckers and linters (`tsc`, `eslint`, `pyright`, `ruff`, `cargo`) with deduplicated output. | ON |
+| `test-report` | Auto-detects test runners and returns only failing tests with trimmed stacks. | ON |
+| `web` | Fetches stripped page text, web search, and optional Playwright browsing/screenshots. | ON |
+| `db` | Read-only PostgreSQL/MySQL schema inspection and guarded `SELECT` queries. | Auto (when `DATABASE_URL` is set) |
 
 ### Token and prompt hygiene
 
@@ -112,40 +114,41 @@ Clone the repository once:
 
 ```bash
 git clone https://github.com/1nn0v8r/toolshed.git
+cd toolshed
 ```
 
-### Run a zero-dependency CLI immediately
+### Option 1: Visual Web UI installer (recommended)
 
-The 9 zero-dependency CLIs need no `npm install` to run:
+Launch the zero-dependency local dashboard to toggle MCP modules, connect your AI clients with one click, and browse CLI tools:
 
 ```bash
-# Audit MCP servers configured in the current project
-node /abs/path/to/toolshed/tools/mcp-audit/src/cli.js
-
-# Summarize your current branch diff into a compact review brief
-node /abs/path/to/toolshed/tools/diff-brief/src/cli.js --base main
-
-# Scan staged changes for secrets, personal paths, and .env files
-node /abs/path/to/toolshed/tools/commit-guard/src/cli.js check --staged
+npm run ui
 ```
 
-To put any CLI on your `PATH` as a global command:
+### Option 2: Interactive CLI setup
+
+Prefer the terminal? Run the guided CLI setup wizard:
 
 ```bash
-cd toolshed/tools/<tool-name>
+npm run setup
+```
+
+Or put the unified `toolshed` command on your `PATH`:
+
+```bash
 npm install -g .
+
+toolshed ui                 # Visual installer & dashboard
+toolshed setup              # Interactive CLI setup wizard
+toolshed status             # Check MCP build & connected AI clients
+toolshed diff-brief --base main
+toolshed mcp-audit --max-tokens 8000
+toolshed commit-guard check --staged
 ```
 
-### Register an MCP server
+### Option 3: Manual MCP registration
 
-MCP servers install in their own folder and register with Claude Code, Cursor, VS Code, or any stdio MCP client:
-
-```bash
-cd toolshed/tools/dev-context-mcp
-npm install
-```
-
-Then follow [Using MCP servers](docs/using-mcp-servers.md) or the tool's own README (for example, [dev-context-mcp](tools/dev-context-mcp#connect-your-assistant)) to register it with your assistant.
+You can also build and register [`dev-context-mcp`](tools/dev-context-mcp) manually - see [Using MCP servers](docs/using-mcp-servers.md) or [dev-context-mcp](tools/dev-context-mcp#connect-your-assistant).
 
 ---
 
@@ -180,7 +183,7 @@ Audit your existing MCP servers to see what is eating context before you even ty
 node /abs/path/to/toolshed/tools/mcp-audit/src/cli.js --max-tokens 8000
 ```
 
-Pair with [dev-context-mcp](tools/dev-context-mcp) (capped reads/searches), [diagnostics-trim-mcp](tools/diagnostics-trim-mcp) (deduplicated type/lint errors), and [test-report-mcp](tools/test-report-mcp) (failures only).
+Pair with [dev-context-mcp](tools/dev-context-mcp) (one unified MCP server with toggleable `core`, `git-history`, `diagnostics`, `test-report`, `web`, and `db` modules).
 
 ### 3. Put deterministic guardrails on AI-assisted repos
 
