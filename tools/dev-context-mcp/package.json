@@ -16,9 +16,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node smoke-test.mjs && node --test test",
+    "test": "node smoke-test.mjs && node --test",
     "smoke": "node smoke-test.mjs",
-    "test:modules": "node --test test",
+    "test:modules": "node --test",
     "typecheck": "tsc --noEmit && tsc -p modules/jsconfig.json",
     "dev": "tsx src/server.ts",
     "build": "tsc",
