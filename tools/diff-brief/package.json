@@ -1,0 +1,44 @@
+{
+  "name": "diff-brief",
+  "version": "0.1.0",
+  "description": "Summarize sprawling git diffs and PRs into token-compact review briefs with risk flags, lockfile deltas, and symbol changes.",
+  "type": "module",
+  "bin": {
+    "diff-brief": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "keywords": [
+    "git",
+    "diff",
+    "code-review",
+    "ai-coding",
+    "pr-summary",
+    "cli",
+    "tokens"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/diff-brief"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/diff-brief#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

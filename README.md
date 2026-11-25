@@ -23,6 +23,7 @@ Each tool lives in its own folder under [`tools/`](tools), with its own install 
 | [db-schema-mcp](tools/db-schema-mcp) | Read-only schema inspection and guarded SELECT queries for PostgreSQL and MySQL. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
 | [dep-check](tools/dep-check) | Scans codebases for unused, missing and misplaced dependencies in package.json. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [dev-context-mcp](tools/dev-context-mcp) | Gives AI coding assistants a token-capped toolset for searching, reading and editing code, git, quality checks and the web. | MCP server | Windows, macOS, Linux | Stable (3.1.0) |
+| [diff-brief](tools/diff-brief) | Summarizes sprawling git diffs and PRs into token-compact review briefs with risk flags, lockfile deltas, and symbol changes. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [diagnostics-trim-mcp](tools/diagnostics-trim-mcp) | Runs project typecheckers and linters, returning token-compact, deduplicated diagnostics. | MCP server, CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [env-check](tools/env-check) | Finds env vars your code reads that `.env.example` does not document, and stale ones it does. | CLI | Windows, macOS, Linux | Beta (0.1.0) |
 | [git-history-mcp](tools/git-history-mcp) | Answers "why is this code like this?" from git history: file history, grouped blame, line origin, churn. | MCP server | Windows, macOS, Linux | Beta (0.1.0) |
