@@ -2,6 +2,11 @@
 
 All notable changes to dev-context-mcp. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Fixed
+- Updated transitive and direct dependencies (`@modelcontextprotocol/sdk`, `body-parser`, `esbuild`, `fast-uri`, `hono`, `ip-address`, `proxy-addr`, `qs`, `zod`) to resolve all reported security advisories (`0 vulnerabilities`).
+
 ## 4.0.0 - 2026-11-25
 
 ### Added

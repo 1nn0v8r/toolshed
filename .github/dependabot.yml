@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/tools/dev-context-mcp"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      dev-context-mcp-deps:
+        patterns:
+          - "*"
