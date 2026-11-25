@@ -34,8 +34,8 @@
     "url": "https://github.com/1nn0v8r/toolshed/issues"
   },
   "scripts": {
-    "test": "node --test",
-    "coverage": "node --test --experimental-test-coverage",
+    "test": "node --test test/mcp-audit.test.js",
+    "coverage": "node --test --experimental-test-coverage test/mcp-audit.test.js",
     "typecheck": "tsc -p jsconfig.json"
   },
   "devDependencies": {
