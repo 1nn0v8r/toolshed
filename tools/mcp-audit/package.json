@@ -1,0 +1,45 @@
+{
+  "name": "mcp-audit",
+  "version": "0.1.0",
+  "description": "Audit MCP servers and client configs for upfront token tax, schema bloat, tool name collisions, and config hygiene.",
+  "type": "module",
+  "bin": {
+    "mcp-audit": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "tokens",
+    "context-window",
+    "audit",
+    "lint",
+    "cli",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/mcp-audit"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/mcp-audit#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test test/mcp-audit.test.js",
+    "coverage": "node --test --experimental-test-coverage test/mcp-audit.test.js",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
