@@ -1,23 +1,25 @@
 {
   "name": "dev-context-mcp",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "type": "module",
-  "description": "Repo-scoped MCP server for AI coding assistants: token-capped file search, reads and edits, git and quality checks, shell and web tools. Runs over stdio or hardened HTTP.",
+  "description": "Unified repo-scoped MCP server for AI coding assistants: token-capped search, reads and edits, git history/blame, diagnostics trimming, test failure reporting, optional read-only DB schema inspection, shell, and web tools. Runs over stdio or hardened HTTP.",
   "main": "dist/server.js",
   "bin": {
     "dev-context-mcp": "dist/server.js"
   },
   "files": [
     "dist",
+    "modules",
     "README.md"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "test": "node smoke-test.mjs",
+    "test": "node smoke-test.mjs && node --test",
     "smoke": "node smoke-test.mjs",
-    "typecheck": "tsc --noEmit",
+    "test:modules": "node --test",
+    "typecheck": "tsc --noEmit && tsc -p modules/jsconfig.json",
     "dev": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -48,11 +50,16 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^5.2.1",
     "fast-glob": "^3.3.3",
+    "mysql2": "^3.24.6",
+    "pg": "^8.23.1",
+    "pg-cursor": "^2.22.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.2",
+    "@types/pg": "^8.23.1",
+    "@types/pg-cursor": "^2.7.2",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }

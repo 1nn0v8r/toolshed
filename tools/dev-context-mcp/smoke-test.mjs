@@ -238,6 +238,32 @@ async function main() {
   // Cleanup temp dirs
   fs.rmSync(tmpBase, { recursive: true, force: true });
 
+  // ── 5. Consolidated modules & toggling (MCP_MODULES / MCP_DISABLED_MODULES) ──
+  const cm = await stdioClient({ cwd: here, env: { DATABASE_URL: "" } });
+  const defaultNames = (await cm.listTools()).tools.map((t) => t.name);
+  check("module git-history registered by default", defaultNames.includes("file_history") && defaultNames.includes("blame_range"));
+  check("module diagnostics registered by default", defaultNames.includes("check_diagnostics") && defaultNames.includes("trim_diagnostics"));
+  check("module test-report registered by default", defaultNames.includes("detect_test_runner") && defaultNames.includes("run_tests"));
+  check("module db hidden when DATABASE_URL is unset", !defaultNames.includes("list_tables"));
+
+  const diagRes = text(await cm.callTool({
+    name: "trim_diagnostics",
+    arguments: { text: "src/app.ts(10,5): error TS2322: Type 'string' is not assignable to type 'number'.", preset: "tsc", includeSnippets: false },
+  }));
+  check("trim_diagnostics executes via dev-context-mcp", diagRes.includes("TS2322"));
+
+  const detectRes = text(await cm.callTool({ name: "detect_test_runner", arguments: {} }));
+  check("detect_test_runner executes via dev-context-mcp", detectRes.length > 0);
+  await cm.close();
+
+  const cmFiltered = await stdioClient({ cwd: here, env: { MCP_MODULES: "core,db" } });
+  const filteredNames = (await cmFiltered.listTools()).tools.map((t) => t.name);
+  check("MCP_MODULES=core,db exposes list_tables", filteredNames.includes("list_tables"));
+  check("MCP_MODULES=core,db hides web & git-history", !filteredNames.includes("fetch_url") && !filteredNames.includes("file_history"));
+  const disabledCall = await cmFiltered.callTool({ name: "file_history", arguments: { path: "package.json" } });
+  check("calling disabled module tool returns clear error", disabledCall.isError === true && text(disabledCall).includes("git-history"));
+  await cmFiltered.close();
+
   console.log(`\n${failures === 0 ? "✅ ALL PASS" : `❌ ${failures} FAILURE(S)`}`);
   process.exit(failures === 0 ? 0 : 1);
 }

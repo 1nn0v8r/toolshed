@@ -41,6 +41,18 @@ Every tool returns **compact, capped output**, so your assistant spends fewer to
 
 You need **Node.js 20+** and **git**. [ripgrep](https://github.com/BurntSushi/ripgrep#installation) is optional but makes search faster.
 
+### Easiest: Visual Web UI or CLI wizard (from repo root)
+
+```bash
+git clone https://github.com/1nn0v8r/toolshed.git
+cd toolshed
+npm run ui       # Visual dashboard to toggle modules & connect AI clients
+# or:
+npm run setup    # Interactive terminal setup wizard
+```
+
+### Manual install
+
 ```bash
 git clone https://github.com/1nn0v8r/toolshed.git
 cd toolshed/tools/dev-context-mcp
@@ -160,6 +172,17 @@ get_recent_changes), package info (get_package_summary) and env keys (get_env_va
 ---
 
 ## Tools
+
+`dev-context-mcp` v4 consolidates all dev MCP capabilities into one server with **6 toggleable modules**:
+
+- `core` (default ON): Orientation, search, read/write, git status, scripts, shell
+- `git-history` (default ON): `file_history`, `blame_range`, `line_origin`, `commit_details`, `search_commits`, `churn`, `contributors`
+- `diagnostics` (default ON): `check_diagnostics`, `trim_diagnostics` (deduplicated `tsc`, `eslint`, `pyright`, `ruff`, `cargo` diagnostics)
+- `test-report` (default ON): `detect_test_runner`, `run_tests`, `parse_report`, `list_failures_from_last_run`
+- `web` (default ON): `fetch_url`, `web_search`, `browse_page`, `screenshot`
+- `db` (auto-enabled when `DATABASE_URL` is set): `list_tables`, `describe_table`, `list_relationships`, `sample_rows`, `run_select`, `connection_info`
+
+Control modules with `MCP_MODULES=core,git-history,diagnostics,test-report` (or `MCP_DISABLED_MODULES=web`), or visually in `toolshed ui`.
 
 ### Orientation
 

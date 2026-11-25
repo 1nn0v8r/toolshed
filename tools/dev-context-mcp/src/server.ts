@@ -24,6 +24,13 @@ import {
 import { getToolDefinitions } from "./tools.js";
 import { rgFilesWithMatches, rgGrep, cachedGlob, invalidateGlobCache } from "./search.js";
 import { isWebTool, handleWebTool } from "./web.js";
+import {
+  resolveEnabledModules,
+  createExtensionState,
+  isExtensionTool,
+  getExtensionToolModule,
+  handleExtensionTool,
+} from "./modules.js";
 
 const exec = promisify(execCb);
 
@@ -80,11 +87,12 @@ export function resolveInitialRoot(): string {
 // its own, so one client's set_repo_root can never affect another's.
 export function makeSession(transport: Transport): Session {
   const { caps, fullPower } = resolveCapabilities(transport);
+  const modules = resolveEnabledModules(process.env);
   const root = resolveInitialRoot();
   const base = process.env.MCP_ROOT_BASE
     ? path.resolve(process.env.MCP_ROOT_BASE)
     : root;
-  return { root, caps, fullPower, rootBase: fullPower ? null : base };
+  return { root, caps, modules, fullPower, rootBase: fullPower ? null : base };
 }
 
 function getArgs(request: { params: { arguments?: unknown } }): Record<string, unknown> {
@@ -95,9 +103,15 @@ function getArgs(request: { params: { arguments?: unknown } }): Record<string, u
 
 export function createServer(session: Session): Server {
   const server = new Server(
-    { name: "dev-context-mcp", version: "3.0.0" },
+    { name: "dev-context-mcp", version: "4.0.0" },
     { capabilities: { tools: {} } }
   );
+  const extState = createExtensionState(session.root);
+  const origClose = server.close.bind(server);
+  server.close = async () => {
+    await extState.close();
+    return origClose();
+  };
 
   // ── Per-session helpers ─────────────────────────────────────────────────────
 
@@ -222,10 +236,10 @@ export function createServer(session: Session): Server {
     return options.raw ? joined : untrusted(joined);
   };
 
-  // ── tools/list (filtered to the session's enabled capabilities) ────────────
+  // ── tools/list (filtered to the session's enabled capabilities & modules) ──
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    const tools = getToolDefinitions().filter((t) => {
+    const tools = getToolDefinitions(session.modules).filter((t) => {
       const need = TOOL_CAPS[t.name];
       return !need || session.caps.has(need);
     });
@@ -246,7 +260,35 @@ export function createServer(session: Session): Server {
 
     // ── web / browse tools (fetch_url, web_search, browse_page, screenshot) ────
     if (isWebTool(toolName)) {
+      if (!session.modules.has("web")) {
+        return {
+          content: [{ type: "text", text: `Tool "${toolName}" belongs to the "web" module, which is disabled. Enable it via MCP_MODULES.` }],
+          isError: true,
+        };
+      }
       return handleWebTool(toolName, args, session);
+    }
+
+    // ── extension modules (git-history, diagnostics, test-report, db) ─────────
+    if (isExtensionTool(toolName)) {
+      const mod = getExtensionToolModule(toolName);
+      if (mod && !session.modules.has(mod)) {
+        const hint = mod === "db"
+          ? "Set DATABASE_URL or include \"db\" in MCP_MODULES."
+          : `Include "${mod}" in MCP_MODULES (or remove it from MCP_DISABLED_MODULES).`;
+        return {
+          content: [{ type: "text", text: `Tool "${toolName}" belongs to the "${mod}" module, which is disabled. ${hint}` }],
+          isError: true,
+        };
+      }
+      return handleExtensionTool(toolName, args, session, extState, resolveRoot);
+    }
+
+    if (!session.modules.has("core")) {
+      return {
+        content: [{ type: "text", text: `Tool "${toolName}" belongs to the "core" module, which is disabled.` }],
+        isError: true,
+      };
     }
 
     // ── set_repo_root ─────────────────────────────────────────────────────────
@@ -1292,7 +1334,8 @@ async function main() {
   const server = createServer(session);
   const t = new StdioServerTransport();
   await server.connect(t);
-  console.error(`dev-context-mcp v3 running (stdio, full power). Repo root: ${session.root}`);
+  const activeMods = [...session.modules].join(", ");
+  console.error(`dev-context-mcp v4 running (stdio, full power). Modules: [${activeMods}]. Repo root: ${session.root}`);
 }
 
 main().catch((error) => {

@@ -6,19 +6,21 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci --ignore-scripts
 COPY src ./src
+COPY modules ./modules
 RUN npm run build
 
-# ── runtime (light): fetch_url + web_search, ripgrep, no browser ──────────────
+# ── runtime (light): fetch_url + web_search, ripgrep, git, no browser ────────
 FROM node:22-slim AS runtime
 ENV NODE_ENV=production
-# ripgrep powers the fast search path.
+# ripgrep powers fast search; git powers git-status and git-history modules.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ripgrep \
+    && apt-get install -y --no-install-recommends ripgrep git \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/modules ./modules
 
 # Non-root; /workspace is the only writable mount (the repo you operate on).
 RUN useradd -r -u 10001 -m appuser \
