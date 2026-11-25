@@ -2,6 +2,11 @@
 
 All notable changes to agent-rules-sync. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Changed
+- Relicensed from MIT to GNU AGPL-3.0-only.
+
 ## 0.1.0 - 2026-11-24
 
 First release.

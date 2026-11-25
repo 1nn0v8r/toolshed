@@ -20,7 +20,7 @@ Usage:
   toolshed <tool> [args...]               Run any standalone toolshed CLI
 
 Setup options:
-  --client <ids>        Comma-separated clients (claude-code,claude-desktop,cursor,vscode,windsurf,gemini-cli)
+  --client <ids>        Comma-separated clients (antigravity,claude-code,claude-desktop,codex,cursor,gemini-cli,windsurf,vscode,project-mcp,cline,roo-code,zed)
   --modules <names>     Comma-separated MCP modules (${MCP_MODULES.map((m) => m.id).join(",")})
   --database-url <url>  Optional PostgreSQL/MySQL URL for the read-only db module
   --repo-root <path>    Default REPO_ROOT (used by Claude Desktop)

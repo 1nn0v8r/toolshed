@@ -4,7 +4,7 @@ A command-line tool that estimates how many tokens files or folders will cost be
 
 - **Runs on:** Windows, macOS and Linux (Node.js 20 or newer)
 - **Requires:** Node.js 20+, and `git` (optional, used for file discovery inside repos). `--exact` also needs an Anthropic API key.
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

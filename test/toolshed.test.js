@@ -76,6 +76,35 @@ describe("client config manager", () => {
       const after = JSON.parse(fs.readFileSync(cursorPath, "utf8"));
       assert.equal(after.mcpServers["dev-context"], undefined);
       assert.deepEqual(after.mcpServers.existing, { command: "echo", args: ["hi"] });
+
+      // Antigravity writes ~/.gemini/config/mcp_config.json
+      const agy = connectClient("antigravity", { homeDir, cwd, modules: ["core", "git-history"] });
+      assert.ok(agy.configPath.endsWith(path.join(".gemini", "config", "mcp_config.json")));
+      const agyJson = JSON.parse(fs.readFileSync(agy.configPath, "utf8"));
+      assert.equal(agyJson.mcpServers["dev-context"].env.MCP_MODULES, "core,git-history");
+
+      // Codex CLI writes & disconnects TOML while preserving other TOML sections
+      const codexPath = path.join(homeDir, ".codex", "config.toml");
+      fs.mkdirSync(path.dirname(codexPath), { recursive: true });
+      fs.writeFileSync(codexPath, 'model = "gpt-5"\n\n[mcp_servers.other]\ncommand = "echo"\n', "utf8");
+      connectClient("codex", { homeDir, cwd, modules: ["core", "diagnostics"] });
+      const codexRaw = fs.readFileSync(codexPath, "utf8");
+      assert.ok(codexRaw.includes('model = "gpt-5"'));
+      assert.ok(codexRaw.includes("[mcp_servers.other]"));
+      assert.ok(codexRaw.includes("[mcp_servers.dev-context]"));
+      assert.ok(codexRaw.includes('MCP_MODULES = "core,diagnostics"'));
+      const codexStatus = detectClientStatuses({ homeDir, cwd }).find((s) => s.id === "codex");
+      assert.equal(codexStatus?.connected, true);
+      assert.deepEqual(codexStatus?.configuredModules, ["core", "diagnostics"]);
+      disconnectClient("codex", { homeDir, cwd });
+      const codexAfter = fs.readFileSync(codexPath, "utf8");
+      assert.ok(!codexAfter.includes("[mcp_servers.dev-context]"));
+      assert.ok(codexAfter.includes("[mcp_servers.other]"));
+
+      // Zed uses context_servers with source: "custom"
+      const zed = connectClient("zed", { homeDir, cwd, modules: ["core"] });
+      const zedJson = JSON.parse(fs.readFileSync(zed.configPath, "utf8"));
+      assert.equal(zedJson.context_servers["dev-context"].source, "custom");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

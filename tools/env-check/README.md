@@ -4,7 +4,7 @@ A CLI that compares the environment variables your code actually reads with what
 
 - **Runs on:** Windows, macOS and Linux
 - **Requires:** Node.js 20 or newer (git is optional, used to respect `.gitignore`)
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ---
 

@@ -4,6 +4,9 @@ All notable changes to repo-pack. Versions follow [Semantic Versioning](https://
 
 ## Unreleased
 
+### Changed
+- Relicensed from MIT to GNU AGPL-3.0-only.
+
 ### Added
 - `--priority <glob>` option (repeatable) to boost matching files to the front of the pack order within token budgets.
 

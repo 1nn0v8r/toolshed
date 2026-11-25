@@ -2,6 +2,11 @@
 
 All notable changes to diff-brief. Versions follow [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Changed
+- Relicensed from MIT to GNU AGPL-3.0-only.
+
 ## 0.1.0 - 2026-11-25
 
 First release.

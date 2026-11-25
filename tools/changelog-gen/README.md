@@ -4,7 +4,7 @@ A command line tool that turns git commit messages into Keep a Changelog entries
 
 - **Runs on:** Windows, macOS and Linux
 - **Requires:** Node.js 20 or newer, and git on your PATH
-- **License:** MIT
+- **License:** AGPL-3.0-only
 
 ## Contents
 

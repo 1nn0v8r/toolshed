@@ -26,7 +26,7 @@
     "monorepo",
     "release-notes"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/1nn0v8r/toolshed.git",

@@ -2,6 +2,11 @@
 
 All notable changes to this tool are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Changed
+- Relicensed from MIT to GNU AGPL-3.0-only.
+
 ## 0.1.0 - 2026-11-17
 
 ### Added

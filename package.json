@@ -6,6 +6,14 @@
   "bin": {
     "toolshed": "bin/toolshed.js"
   },
+  "files": [
+    "bin",
+    "cli",
+    "tools",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -15,7 +23,7 @@
     "status": "node bin/toolshed.js status",
     "test": "node --test test/toolshed.test.js"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/1nn0v8r/toolshed.git"
