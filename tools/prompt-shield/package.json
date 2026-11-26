@@ -1,0 +1,45 @@
+{
+  "name": "prompt-shield",
+  "version": "0.1.0",
+  "description": "Detect and strip invisible Unicode, ASCII smuggling, Trojan Source bidi controls, and prompt injection in AI rules, skills, diffs, and MCP servers.",
+  "type": "module",
+  "bin": {
+    "prompt-shield": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "AGPL-3.0-only",
+  "keywords": [
+    "security",
+    "prompt-injection",
+    "unicode",
+    "trojan-source",
+    "ascii-smuggling",
+    "mcp",
+    "ai-coding",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/prompt-shield"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/prompt-shield#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test test/prompt-shield.test.js",
+    "coverage": "node --test --experimental-test-coverage test/prompt-shield.test.js",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
