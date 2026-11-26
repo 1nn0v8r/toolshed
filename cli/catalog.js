@@ -149,6 +149,15 @@ export const CLI_TOOLS = [
     example: "toolshed commit-guard check --staged",
   },
   {
+    id: "prompt-shield",
+    name: "prompt-shield",
+    category: "Agent & Repo Guardrails",
+    description: "Detect and strip invisible Unicode, ASCII smuggling, Trojan Source bidi, and prompt injection.",
+    entry: path.join(REPO_ROOT, "tools", "prompt-shield", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed prompt-shield check --ai-only",
+  },
+  {
     id: "skill-lint",
     name: "skill-lint",
     category: "Agent & Repo Guardrails",
