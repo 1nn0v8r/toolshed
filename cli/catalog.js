@@ -149,6 +149,15 @@ export const CLI_TOOLS = [
     example: "toolshed commit-guard check --staged",
   },
   {
+    id: "skill-lint",
+    name: "skill-lint",
+    category: "Agent & Repo Guardrails",
+    description: "Validate Agent Skills (SKILL.md), audit startup token budgets, and check bundled safety.",
+    entry: path.join(REPO_ROOT, "tools", "skill-lint", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed skill-lint --budget 2000 --strict",
+  },
+  {
     id: "changelog-gen",
     name: "changelog-gen",
     category: "Codebase & Release",

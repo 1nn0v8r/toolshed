@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+// @ts-check
+import { run } from "./main.js";
+
+process.exitCode = run(process.argv.slice(2), {
+  cwd: process.cwd(),
+  out: (s) => process.stdout.write(s),
+  err: (s) => process.stderr.write(s),
+});
