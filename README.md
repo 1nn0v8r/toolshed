@@ -100,6 +100,7 @@ Fast, deterministic CLIs for everyday repository hygiene.
 | [changelog-gen](tools/changelog-gen) | Turns commit messages into Keep a Changelog entries, with per-tool tags and paths for monorepos. | CLI | Zero | Beta (0.1.0) |
 | [dep-check](tools/dep-check) | Scans codebases for unused, missing, and misplaced dependencies in `package.json`. | CLI | Zero | Beta (0.1.0) |
 | [env-check](tools/env-check) | Finds env vars your code reads that `.env.example` does not document, and stale ones it does. | CLI | Zero | Beta (0.1.0) |
+| [flake-check](tools/flake-check) | Scans test files for non-deterministic anti-patterns and stress-runs test commands to catch flaky tests and timing outliers. | CLI | Zero | Experimental (0.1.0) |
 
 <!--
 Add new tools to the matching category table above, one row each, in alphabetical order.

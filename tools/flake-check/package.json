@@ -1,0 +1,44 @@
+{
+  "name": "flake-check",
+  "version": "0.1.0",
+  "description": "Zero-dependency CLI that scans tests for non-deterministic anti-patterns and stress-runs test commands to catch flaky tests and timing outliers.",
+  "type": "module",
+  "bin": {
+    "flake-check": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "AGPL-3.0-only",
+  "keywords": [
+    "testing",
+    "flaky-tests",
+    "ci",
+    "determinism",
+    "ai-coding",
+    "lint",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1nn0v8r/toolshed.git",
+    "directory": "tools/flake-check"
+  },
+  "homepage": "https://github.com/1nn0v8r/toolshed/tree/main/tools/flake-check#readme",
+  "bugs": {
+    "url": "https://github.com/1nn0v8r/toolshed/issues"
+  },
+  "scripts": {
+    "test": "node --test test/flake-check.test.js",
+    "coverage": "node --test --experimental-test-coverage test/flake-check.test.js",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
