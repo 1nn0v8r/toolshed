@@ -2,6 +2,19 @@
 
 All notable changes to the unified `toolshed` package (CLI, Web UI installer, Docker stack, and consolidated MCP server).
 
+## 1.1.0 - 2026-11-28
+
+### Added
+- `flake-check` CLI (`toolshed flake-check`): static test flakiness scanner (8 rules, inline suppressions, SARIF/JSON/Markdown) and parallel stress-runner with timing stats and per-test failure tracking (#60).
+- `prompt-shield` CLI (`toolshed prompt-shield`): invisible Unicode, ASCII smuggling, Trojan Source bidi, and prompt-injection scanner across AI rules, diffs, stdin, and MCP servers (#56).
+- `skill-lint` CLI (`toolshed skill-lint`): Agent Skills (`SKILL.md`) spec validator, startup token budget auditor, and link/permission checker (#55).
+- One-command tarball and Docker install instructions in `README.md` (#47).
+
+### Changed
+- Updated `dev-context-mcp` dependencies to resolve security advisories and grouped Dependabot updates (#49, #50).
+- Synced README and guides with unified CLI, AGPL-3.0 licensing, and release workflow (#54).
+- Exempted Dependabot PRs from the `changelog` PR check (#52).
+
 ## 1.0.0 - 2026-11-25
 
 ### Added

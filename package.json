@@ -1,6 +1,6 @@
 {
   "name": "toolshed",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Unified CLI, interactive setup, local Web UI, and consolidated dev-context MCP server for faster, leaner AI-assisted coding.",
   "bin": {
