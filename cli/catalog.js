@@ -193,4 +193,13 @@ export const CLI_TOOLS = [
     needsInstall: false,
     example: "toolshed env-check",
   },
+  {
+    id: "flake-check",
+    name: "flake-check",
+    category: "Codebase & Release",
+    description: "Scan tests for non-deterministic anti-patterns and stress-run commands to catch flaky tests.",
+    entry: path.join(REPO_ROOT, "tools", "flake-check", "src", "cli.js"),
+    needsInstall: false,
+    example: "toolshed flake-check scan",
+  },
 ];
