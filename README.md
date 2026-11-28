@@ -118,7 +118,7 @@ Status values: Experimental, Beta, Stable, Deprecated.
 **With Node.js (recommended for one-click local AI client setup):**
 
 ```bash
-npm install -g https://github.com/1nn0v8r/toolshed/releases/download/toolshed%401.0.0/toolshed-1.0.0.tgz
+npm install -g https://github.com/1nn0v8r/toolshed/releases/download/toolshed%401.1.0/toolshed-1.1.0.tgz
 toolshed ui
 ```
 
